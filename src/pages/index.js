@@ -1,123 +1,123 @@
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
+import { Loader } from '../components/Loader'
+import { DataTable } from 'primereact/datatable'
+import { Column } from 'primereact/column'
+import { InputText } from 'primereact/inputtext'
+import { FilterMatchMode } from 'primereact/api'
+import { Image } from 'primereact/image'
+import { ScrollTop } from 'primereact/scrolltop'
+import mongoose from 'mongoose'
+import Hotel from '../models/Hotel'
+import City from '../models/City'
+import User from '../models/User'
+        
+const punycode = require('punycode/')
 
-const inter = Inter({ subsets: ['latin'] })
+export default function Home (hotels) {
+  console.log(hotels)
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState(JSON.parse(hotels))
+  const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
+  const [globalFilterValue, setGlobalFilterValue] = useState('')
 
-export default function Home() {
+  useEffect(() => {if (data) {setTimeout(() => setLoading(false), 1000)}},[data])
+
+  if (loading) {return (<Loader />)}
+
+  const onGlobalFilterChange = (e) => {
+    const value = e.target.value
+    let _filters = { ...filters }
+    _filters['global'].value = value
+    setFilters(_filters)
+    setGlobalFilterValue(value)
+  }
+
+  const header = () => {
+    return (
+      <div className="flex align-items-center justify-content-between">
+        <div className="flex">
+          <Image src="satellite.svg" alt="portal" width="25" style={{marginLeft:"10px"}}/>
+          <span style={{ margin: "0 15px 0 5px", fontWeight: "600" }}>Сателлит</span>
+          <Image src="rocket.svg" alt="portal" width="25" />
+          <span style={{ margin: "0 15px 0 5px", fontWeight: "600" }}>Классический</span>
+          <Image src="aa.svg" alt="portal" width="25" />
+          <span style={{ margin: "0 15px 0 5px", fontWeight: "600" }}>Автономный</span>
+          <Image src="logo.svg" alt="portal" width="25" />
+          <span style={{ margin: "0 0 0 5px", fontWeight: "600" }}>Страница на портале</span>
+        </div>
+        <div className="flex">
+          <span className='p-input-icon-left p-input-icon-right'>
+            <i className="pi pi-search" />
+            <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Поиск" />
+            {globalFilterValue ? <><i className="pi pi-times" onClick={clearFilter} style={{ cursor: 'pointer' }} /></> : <><i className="pi pi-times" style={{ color: 'lightgrey' }} /></>}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  const clearFilter = () => {
+    setFilters({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
+    setGlobalFilterValue('')
+  }
+
+  const nameBodyTemplate = (data) => {
+    return <>
+    <a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target="_blank" style={{textDecoration:"none"}}><span style={{color:"black",fontWeight:"600"}}>{data.name}</span></a>
+    <p style={{fontSize:"13px",margin:"0px",lineHeight:"15px"}}>
+    {data.phone1 ? <>{data.phone1}<br></br></> : <></>}
+    {data.phone2 ? <>{data.phone2}<br></br></> : <></>}
+    {data.email ? <>{data.email}</> : <></>}
+    </p>
+    </>
+  }
+
+  const staffBodyTemplate = (data) => {
+    return data.staff.map((item,index) => {return <p key={index} style={{fontSize:"13px",margin:"0px",lineHeight:"15px"}}>{item}<br></br></p>})
+  }
+
+  const linkBodyTemplate = (data) => {
+    if (data.site_type === "Сателлит") {return data.sat_domain ? <><a href={`http://${data.sat_domain}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.sat_domain)}</a></> : <></>}
+    if (data.site_type === "Классический" || data.site_type === "Автономный") {return data.href ? <><a href={`http://${data.href}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.href)}</a></> : <></>}
+    if (data.site_type === "Нет сайта") {return data.portal_link ? <><a href={`http://${data.portal_link.replace(/^https?:\/\//,'')}`} target="_blank" style={{textDecoration:"none"}}>{data.portal_link.replace(/^https?:\/\//,'')}</a></> : <><a href={`https://broniryem.ru/search?q=${data.name}`} target="_blank" style={{textDecoration:"none"}}>{`broniryem.ru/search?q=${data.name}`}</a></>}
+    return <></>
+  }
+
+  const siteBodyTemplate = (data) => {
+    if (data.site_type === "Сателлит") {return <Image src="satellite.svg" alt="portal" width="25" />}
+    if (data.site_type === "Классический") {return <Image src="rocket.svg" alt="portal" width="25" />}
+    if (data.site_type === "Автономный") {return <Image src="aa.svg" alt="portal" width="25" />}
+    if (data.site_type === "Нет сайта") {return <Image src="logo.svg" alt="portal" width="25" />}
+    return <Image src="nothing.svg" alt="portal" width="25" />
+  }
+
   return (
     <>
       <Head>
-        <title>Create Next App</title>
-        <meta name="description" content="Generated by create next app" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <title>Главная | Tools</title>
       </Head>
       <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>src/pages/index.js</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
-        </div>
-
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-          <div className={styles.thirteen}>
-            <Image
-              src="/thirteen.svg"
-              alt="13"
-              width={40}
-              height={31}
-              priority
-            />
-          </div>
-        </div>
-
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
-        </div>
+        <DataTable value={data} size="small" selectionMode="single" dataKey="_id" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,data.length]} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email','type','staff']} header={header} emptyMessage="Ничего не найдено." style={{'width': '95%'}}>
+          <Column header="Объект" body={nameBodyTemplate} sortable></Column>
+          <Column field="city" header="Регион" sortable></Column>
+          <Column field="type" header="Тип" sortable></Column>
+          <Column header="Ссылка" body={linkBodyTemplate}></Column>
+          <Column header="Менеджер" body={staffBodyTemplate}></Column>
+          <Column header="Сайт" body={siteBodyTemplate}></Column>
+        </DataTable>
       </main>
+      <ScrollTop className="bg-gray-500" style={{right:"5px"}} />
     </>
   )
+}
+
+export const getServerSideProps = async () => {
+  if (!mongoose.connections[0].readyState) {mongoose.connect(process.env.MONGODB_URL, {useNewUrlParser: true, useUnifiedTopology: true})}
+  const out = []
+  const hotels = await Hotel.find({ puma: true }, 'name city email href sat_domain portal_link phone1 site_type name_slug sat_template sat_active temporarily_disable sat_finish')
+  const cities = await City.find({}, 'name')
+  const users = await User.find({public: true}, 'user')
+  return {props: {hotels: JSON.stringify(out)}}
 }
