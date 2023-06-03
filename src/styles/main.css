@@ -1,0 +1,15 @@
+.main {
+  padding: 20px;
+}
+
+.sat_template[role=cell] {
+  font-size: small;
+}
+
+.p-tooltip {
+  padding: 5px;
+}
+
+.p-tooltip-text {
+  font-size: 13px;
+}

@@ -2,10 +2,21 @@ import mongoose from 'mongoose'
 
 const { Schema } = mongoose
 const Hotel = new Schema({
+  _id: String,
   name: String,
   puma: Boolean,
+  city: Array,
+  staff: Array,
+  href: String,
+  sat_domain: String,
+  portal_link: String,
+  sat_template: String,
+  sat_finish: String,
+  temporarily_disable: Boolean,
   sat_active: Boolean,
   phone1: String,
+  phone2: String,
+  site_type: String,
   email: String,
   slider_banner_code: String,
   slider_banner_code_bottom: String,
