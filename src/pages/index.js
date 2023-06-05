@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { Loader } from '../components/Loader'
 import { DataTable } from 'primereact/datatable'
-import { Tooltip } from 'primereact/tooltip'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
+import { Toolbar } from 'primereact/toolbar'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
 import { ScrollTop } from 'primereact/scrolltop'
+import { Sidebar } from 'primereact/sidebar'
+import { Button } from 'primereact/button'
 import mongoose from 'mongoose'
 import Hotel from '../models/Hotel'
 import City from '../models/City'
@@ -20,6 +22,7 @@ export default function Home (hotels) {
   const [data, setData] = useState(JSON.parse(hotels.hotels))
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
+  const [visible, setVisibleSide] = useState(false)
 
   useEffect(() => {if (data) {setTimeout(() => setLoading(false), 1000)}},[data])
 
@@ -74,7 +77,7 @@ export default function Home (hotels) {
   }
 
   const staffBodyTemplate = (data) => {
-    return data.staff.map((item,index) => {return <a href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target="_blank" style={{textDecoration:"none"}}><p key={index} style={{fontSize:"13px",margin:"0px",lineHeight:"15px"}}>{item.user}<br></br></p></a>})
+    return data.staff.map((item,index) => {return <a href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target="_blank" style={{textDecoration:"none"}}><p key={index} style={{fontSize:"13px",margin:"0px",lineHeight:"13px"}}>{item.user}<br></br></p></a>})
   }
 
   const linkBodyTemplate = (data) => {
@@ -85,12 +88,31 @@ export default function Home (hotels) {
   }
 
   const siteBodyTemplate = (data) => {
-    if (data.site_type === "Сателлит") {return <><Tooltip target=".site_type" /><Image src="satellite.svg" width="25" className="site_type" data-pr-tooltip={data.site_type} data-pr-position="left" /></>}
-    if (data.site_type === "Классический") {return <Image src="rocket.svg" width="25" />}
-    if (data.site_type === "Автономный") {return <Image src="aa.svg" width="25" />}
-    if (data.site_type === "Нет сайта") {return <Image src="logo.svg" width="25" />}
-    return <Image src="nothing.svg" alt="portal" width="25" />
+    if (data.site_type === "Сателлит") {return <Image src="satellite.svg" width="20" />}
+    if (data.site_type === "Классический") {return <Image src="rocket.svg" width="20" />}
+    if (data.site_type === "Автономный") {return <Image src="aa.svg" width="20" />}
+    if (data.site_type === "Нет сайта") {return <Image src="logo.svg" width="20" />}
+    return <Image src="nothing.svg" alt="portal" width="20" />
   }
+
+  const ToolbarStartContent = (
+    <div className="card flex justify-content-center">
+      <Sidebar visible={visible} onHide={() => setVisibleSide(false)}>
+        <h2>Sidebar</h2>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+      </Sidebar>
+      <Button icon="pi pi-bars" severity="secondary" rounded text onClick={() => setVisibleSide(true)} />
+    </div>
+  )
+
+const ToolbarEndContent = (
+    <>
+      <Button icon="pi pi-arrow-right" severity="secondary" rounded text />
+    </>
+)
 
   return (
     <>
@@ -98,7 +120,8 @@ export default function Home (hotels) {
         <title>Главная | Tools</title>
       </Head>
       <main className="main">
-        <DataTable value={data} size="small" selectionMode="single" dataKey="_id" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,data.length]} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email','type','staff']} header={header} emptyMessage="Ничего не найдено.">
+      <Toolbar start={ToolbarStartContent} end={ToolbarEndContent} style={{marginBottom:"10px"}}/>
+        <DataTable value={data} size="small" selectionMode="single" dataKey="_id" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,data.length]} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email','type','staff']} header={header} emptyMessage="Ничего не найдено." style={{fontSize:"14px"}}>
           <Column header="Объект" body={nameBodyTemplate} sortable></Column>
           <Column field="city" header="Регион" sortable></Column>
           <Column header="Ссылка" body={linkBodyTemplate}></Column>
