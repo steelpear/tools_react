@@ -7,3 +7,8 @@
 }
 
 .p-toolbar {padding: 5px;}
+.p-sidebar-content a {
+  text-decoration: none;
+  font-size: 17px;
+}
+.skeleton_wrap {padding: 0 20px 20px 20px;}

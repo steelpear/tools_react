@@ -1,32 +1,31 @@
-import { useState, useEffect } from 'react'
-import Head from 'next/head'
+import { useState, useRef } from 'react'
 import { Loader } from '../components/Loader'
+import { MainLayout } from '../components/MainLayout'
 import { DataTable } from 'primereact/datatable'
+import { ContextMenu } from 'primereact/contextmenu'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
-import { Toolbar } from 'primereact/toolbar'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
-import { ScrollTop } from 'primereact/scrolltop'
-import { Sidebar } from 'primereact/sidebar'
-import { Button } from 'primereact/button'
-import mongoose from 'mongoose'
-import Hotel from '../models/Hotel'
-import City from '../models/City'
-import User from '../models/User'
+import useSWR from 'swr'
         
 const punycode = require('punycode/')
+const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
-export default function Home (hotels) {
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState(JSON.parse(hotels.hotels))
+export default function Home () {
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
-  const [visible, setVisibleSide] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const cm = useRef(null)
+  const { data, error, isLoading } = useSWR('/api/hotels', fetcher)
 
-  useEffect(() => {if (data) {setTimeout(() => setLoading(false), 1000)}},[data])
+  const menuModel = [
+    { label: 'View', icon: 'pi pi-fw pi-search'},
+    { label: 'Delete', icon: 'pi pi-fw pi-times'}
+]
 
-  if (loading) {return (<Loader />)}
+  if (error) return <div>Ошибка загрузки...</div>
+  if (isLoading) {return (<Loader />)}
 
   const onGlobalFilterChange = (e) => {
     const value = e.target.value
@@ -66,14 +65,12 @@ export default function Home (hotels) {
   }
 
   const nameBodyTemplate = (data) => {
-    return <>
-    <a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target="_blank" style={{textDecoration:"none"}}><span style={{color:"black",fontWeight:"600"}}>{data.name}</span></a>
+    return <div style={{paddingLeft:5}}><a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target="_blank" style={{textDecoration:"none"}}><span style={{color:"black",fontWeight:"600"}}>{data.name}</span></a>
     <p style={{fontSize:"13px",margin:"0px",lineHeight:"15px"}}>
     {data.phone1 ? <>{data.phone1}<br></br></> : <></>}
     {data.phone2 ? <>{data.phone2}<br></br></> : <></>}
     {data.email ? <>{data.email}</> : <></>}
-    </p>
-    </>
+    </p></div>
   }
 
   const staffBodyTemplate = (data) => {
@@ -95,60 +92,32 @@ export default function Home (hotels) {
     return <Image src="nothing.svg" alt="portal" width="20" />
   }
 
-  const ToolbarStartContent = (
-    <div className="card flex justify-content-center">
-      <Sidebar visible={visible} onHide={() => setVisibleSide(false)}>
-        <h2>Sidebar</h2>
-        <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        </p>
-      </Sidebar>
-      <Button icon="pi pi-bars" severity="secondary" rounded text onClick={() => setVisibleSide(true)} />
-    </div>
-  )
+  const createBodyTemplate = (data) => {
+    return <span style={{fontSize:13}}>{data.sat_finish ? formatDate(data.sat_finish) : '---'}</span>
+  }
 
-const ToolbarEndContent = (
-    <>
-      <Button icon="pi pi-arrow-right" severity="secondary" rounded text />
-    </>
-)
+  const formatDate = (date) => {
+    const dat = new Date(date).toLocaleDateString('ru-ru')
+    const dat1 = dat.slice(0, 6)
+    const dat2 = dat.slice(8)
+    const dat3 = dat1 + dat2
+    return dat3
+  }
 
   return (
-    <>
-      <Head>
-        <title>Главная | Tools</title>
-      </Head>
-      <main className="main">
-      <Toolbar start={ToolbarStartContent} end={ToolbarEndContent} style={{marginBottom:"10px"}}/>
-        <DataTable value={data} size="small" selectionMode="single" dataKey="_id" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,data.length]} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email','type','staff']} header={header} emptyMessage="Ничего не найдено." style={{fontSize:"14px"}}>
+    <MainLayout>
+      <main>
+        <ContextMenu model={menuModel} ref={cm} onHide={() => setSelectedProduct(null)} />
+        <DataTable value={data} onContextMenu={(e) => cm.current.show(e.originalEvent)} contextMenuSelection={selectedProduct} onContextMenuSelectionChange={(e) => setSelectedProduct(e.value)} size="small" selectionMode="single" dataKey="_id" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,data.length]} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email','type','staff']} header={header} emptyMessage="Ничего не найдено." style={{fontSize:14}}>
           <Column header="Объект" body={nameBodyTemplate} sortable></Column>
           <Column field="city" header="Регион" sortable></Column>
           <Column header="Ссылка" body={linkBodyTemplate}></Column>
           <Column header="Менеджер" body={staffBodyTemplate}></Column>
-          <Column field="sat_template" header="Шаблон" sortable className="sat_template"></Column>
+          <Column field="sat_template" header="Шаблон" sortable></Column>
           <Column header="Сайт" body={siteBodyTemplate}></Column>
+          <Column header="Создан" body={createBodyTemplate}></Column>
         </DataTable>
       </main>
-      <ScrollTop className="bg-gray-500" style={{right:"5px"}} />
-    </>
+    </MainLayout>
   )
-}
-
-export const getServerSideProps = async () => {
-  if (!mongoose.connections[0].readyState) {mongoose.connect(process.env.MONGODB_URL, {useNewUrlParser: true, useUnifiedTopology: true})}
-  const out = []
-  const hotels = await Hotel.find({ puma: true }, 'name city email href sat_domain portal_link phone1 phone2 site_type sat_template sat_active temporarily_disable sat_finish')
-  const cities = await City.find({}, 'name')
-  const users = await User.find({public: true}, 'user hotels')
-  hotels.forEach(hotel => {
-    const city = cities.filter(item => { return item._id == hotel.city[hotel.city.length - 1] })
-    const user = users.filter(item => { return item.hotels.includes(hotel._id) })
-    const staff = user.map(item => { return { user: item.user, _id: item._id } })
-    hotel.city = city[0] ? city[0].name : 'Нет региона'
-    hotel.staff = staff
-    hotel.site_type = hotel.site_type ? hotel.site_type : 'Нет сайта'
-    out.push(hotel)
-  })
-  return {props: {hotels: JSON.stringify(out)}}
 }
