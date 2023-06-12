@@ -1,8 +1,11 @@
 import mongoose from 'mongoose'
 
 const connectDB = handler => async (req, res) => {
-  if (mongoose.connections[0].readyState) {return handler(req, res)}
-  mongoose.connect(process.env.MONGODB_URL, {
+  if (mongoose.connections[0].readyState) {
+    return handler(req, res)
+  }
+  
+  await mongoose.connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
@@ -10,3 +13,4 @@ const connectDB = handler => async (req, res) => {
 }
 
 export default connectDB
+  

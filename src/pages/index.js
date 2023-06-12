@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import Head from 'next/head'
 import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
 import { DataTable } from 'primereact/datatable'
-import { ContextMenu } from 'primereact/contextmenu'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
+import { Button } from 'primereact/button'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
 import useSWR from 'swr'
@@ -15,17 +16,29 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json())
 export default function Home () {
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const cm = useRef(null)
+  const [contextMenu, setContextMenu] = useState(false)
+  const [positions, setPositions] = useState({x:0,y:0})
+  const [currentData, setCurrentdata] = useState(null)
+  const [currentId, setCurrentId] = useState(null)
+  const [hotels, setHotels] = useState(null)
   const { data, error, isLoading } = useSWR('/api/hotels', fetcher)
 
-  const menuModel = [
-    { label: 'View', icon: 'pi pi-fw pi-search'},
-    { label: 'Delete', icon: 'pi pi-fw pi-times'}
-]
+  useEffect(() => { setHotels(data) }, [data])
 
   if (error) return <div>Ошибка загрузки...</div>
   if (isLoading) {return (<Loader />)}
+
+  const handleContextMenu = (e,data,id) => {
+    e.preventDefault()
+    const positions = {
+      x: e.pageX,
+      y: e.pageY
+    }
+    setPositions(positions)
+    setCurrentdata(data)
+    setCurrentId(id)
+    setContextMenu(true)
+  }
 
   const onGlobalFilterChange = (e) => {
     const value = e.target.value
@@ -67,9 +80,9 @@ export default function Home () {
   const nameBodyTemplate = (data) => {
     return <div style={{paddingLeft:5}}><a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target="_blank" style={{textDecoration:"none"}}><span style={{color:"black",fontWeight:"600"}}>{data.name}</span></a>
     <p style={{fontSize:"13px",margin:"0px",lineHeight:"15px"}}>
-    {data.phone1 ? <>{data.phone1}<br></br></> : <></>}
-    {data.phone2 ? <>{data.phone2}<br></br></> : <></>}
-    {data.email ? <>{data.email}</> : <></>}
+    {data.phone1 ? <div onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id)}>{data.phone1}<br></br></div> : <></>}
+    {data.phone2 ? <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id)}>{data.phone2}<br></br></div> : <></>}
+    {data.email ? <div onContextMenu={(e) => handleContextMenu(e,data.email,data._id)}>{data.email}</div> : <></>}
     </p></div>
   }
 
@@ -105,19 +118,30 @@ export default function Home () {
   }
 
   return (
+    <>
+    <Head>
+      <title>Все сайты / Инструменты</title>
+    </Head>
     <MainLayout>
       <main>
-        <ContextMenu model={menuModel} ref={cm} onHide={() => setSelectedProduct(null)} />
-        <DataTable value={data} onContextMenu={(e) => cm.current.show(e.originalEvent)} contextMenuSelection={selectedProduct} onContextMenuSelectionChange={(e) => setSelectedProduct(e.value)} size="small" selectionMode="single" dataKey="_id" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,data.length]} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email','type','staff']} header={header} emptyMessage="Ничего не найдено." style={{fontSize:14}}>
-          <Column header="Объект" body={nameBodyTemplate} sortable></Column>
-          <Column field="city" header="Регион" sortable></Column>
-          <Column header="Ссылка" body={linkBodyTemplate}></Column>
-          <Column header="Менеджер" body={staffBodyTemplate}></Column>
-          <Column field="sat_template" header="Шаблон" sortable></Column>
-          <Column header="Сайт" body={siteBodyTemplate}></Column>
-          <Column header="Создан" body={createBodyTemplate}></Column>
+        <DataTable value={hotels} size="small" selectionMode="single" dataKey="_id" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,data.length]} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email','type','staff']} header={header} emptyMessage="Ничего не найдено." style={{fontSize:14}}>
+          <Column key="1" header="Объект" body={nameBodyTemplate} sortable></Column>
+          <Column key="2" field="city" header="Регион" sortable></Column>
+          <Column key="3" header="Ссылка" body={linkBodyTemplate}></Column>
+          <Column key="4" header="Менеджер" body={staffBodyTemplate}></Column>
+          <Column key="5" field="sat_template" header="Шаблон" sortable></Column>
+          <Column key="6" header="Сайт" body={siteBodyTemplate}></Column>
+          <Column key="7" header="Создан" body={createBodyTemplate}></Column>
         </DataTable>
+        {contextMenu ? (
+          <div className="context-menu-wrap" style={{top:positions.y, left:positions.x}}>
+            <InputText type="text" className="p-inputtext-sm" value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
+            <i className="pi pi-times ml-3" style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
+            <i className="pi pi-check ml-3 mr-2" style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
+          </div>
+        ) : <></>}
       </main>
     </MainLayout>
+    </>
   )
 }

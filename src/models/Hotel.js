@@ -1,6 +1,5 @@
-import mongoose from 'mongoose'
+import { Schema, model, models } from 'mongoose'
 
-const { Schema } = mongoose
 const Hotel = new Schema({
   _id: String,
   name: String,
@@ -49,4 +48,4 @@ const Hotel = new Schema({
   chat_code: String
 }, { collection: 'collections_collection5a5dc18e670fd819bca20da7' })
 
-module.exports = mongoose.models.Hotel || mongoose.model('Hotel', Hotel)
+module.exports = models.Hotel || model('Hotel', Hotel)

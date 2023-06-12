@@ -1,6 +1,4 @@
 import {useState} from 'react'
-import Link from 'next/link'
-import Head from 'next/head'
 import {useRouter} from 'next/router'
 import 'primeicons/primeicons.css'
 import { ScrollTop } from 'primereact/scrolltop'
@@ -15,9 +13,9 @@ export function MainLayout({ children }) {
   const ToolbarStartContent = (
     <div className="card flex justify-content-center">
       <Sidebar visible={visible} onHide={() => setVisibleSide(false)} className="w-full md:w-10rem lg:w-18rem">
-        <Link href="/"><p><i className="pi pi-home"></i>&ensp;Все сайты</p></Link>
-        <Link href="/users"><p><i className="pi pi-user"></i>&ensp;Пользователи</p></Link>
-        <Link href="/ats"><p><i className="pi pi-phone"></i>&ensp;Телефония</p></Link>
+        <p onClick={() => router.push('/')}><i className="pi pi-home mr-3"></i>Все сайты</p>
+        <p onClick={() => router.push('/users')}><i className="pi pi-user mr-3"></i>Пользователи</p>
+        <p onClick={() => router.push('/ats')}><i className="pi pi-phone mr-3"></i>Телефония</p>
       </Sidebar>
       <Button icon="pi pi-bars" severity="secondary" rounded text onClick={() => setVisibleSide(true)} />
     </div>
@@ -31,12 +29,6 @@ const ToolbarEndContent = (
 
   return (
     <>
-      <Head>
-        <title>Инструменты</title>
-        <meta name="description" content="Инструменты" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <main className="main">
       <Toolbar start={ToolbarStartContent} end={ToolbarEndContent} style={{marginBottom:"10px"}}/>
         {children}

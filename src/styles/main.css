@@ -7,8 +7,18 @@
 }
 
 .p-toolbar {padding: 5px;}
-.p-sidebar-content a {
-  text-decoration: none;
+.p-sidebar-content p {
   font-size: 17px;
+  cursor: pointer;
 }
 .skeleton_wrap {padding: 0 20px 20px 20px;}
+.context-menu-wrap {
+  background: white;
+  padding: 5px;
+  position: absolute;
+  z-index: 999;
+  border: 1px solid #E9ECEF;
+  box-shadow: 0 0 5px rgba(0,0,0,.3);
+  display: flex;
+  align-items: center;
+}

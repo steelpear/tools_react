@@ -1,4 +1,5 @@
 import {useState, useEffect} from 'react'
+import Head from 'next/head'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Skeleton } from 'primereact/skeleton'
 
@@ -30,6 +31,9 @@ export const Loader = () => {
   if (height) {
     return (
       <>
+        <Head>
+          <title>Загрузка / Инструменты</title>
+        </Head>
         <Row />
         <div style={{ position: "absolute", top: (height / 2) - (size / 2), left: (width / 2) - (size / 2)}}>
           <ProgressSpinner style={{width: size, height: size}} strokeWidth="3" />

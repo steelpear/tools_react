@@ -1,5 +1,5 @@
-import mongoose from 'mongoose'
-const { Schema } = mongoose
+import { Schema, model, models } from 'mongoose'
+
 const User = new Schema({
   _id: String,
   user: String,
@@ -7,4 +7,4 @@ const User = new Schema({
   public: Boolean
 }, { collection: 'cockpit_accounts' })
 
-module.exports = mongoose.models.User || mongoose.model('User', User)
+module.exports = models.User || model('User', User)
