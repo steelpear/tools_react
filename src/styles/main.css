@@ -22,3 +22,6 @@
   display: flex;
   align-items: center;
 }
+.p-multiselect {
+  max-width: 300px;
+}

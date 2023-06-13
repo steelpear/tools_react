@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import mongoose from 'mongoose'
+import User from '../models/User'
 import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
 import { Button } from 'primereact/button'
+import { MultiSelect } from 'primereact/multiselect'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
 import useSWR from 'swr'
@@ -13,15 +16,24 @@ import useSWR from 'swr'
 const punycode = require('punycode/')
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
-export default function Home () {
+export const getServerSideProps = async () => {
+  if (mongoose.connections[0].readyState !== 1) {mongoose.connect(process.env.MONGODB_URL, {useNewUrlParser: true, useUnifiedTopology: true})}
+  const users = await User.find({public: true}, 'user')
+  return {props: {users: JSON.stringify(users)}}
+}
+
+export default function Home (users) {
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
+  const [contextStaffMenu, setContextStaffMenu] = useState(false)
   const [positions, setPositions] = useState({x:0,y:0})
   const [currentData, setCurrentdata] = useState(null)
+  const [currentStaffData, setCurrentStaffData] = useState(null)
   const [currentId, setCurrentId] = useState(null)
   const [hotels, setHotels] = useState(null)
   const { data, error, isLoading } = useSWR('/api/hotels', fetcher)
+  const staff = JSON.parse(users.users)
 
   useEffect(() => { setHotels(data) }, [data])
 
@@ -38,6 +50,17 @@ export default function Home () {
     setCurrentdata(data)
     setCurrentId(id)
     setContextMenu(true)
+  }
+  const handleContextMenuStaff = (e,data,id) => {
+    e.preventDefault()
+    const positions = {
+      x: e.pageX,
+      y: e.pageY
+    }
+    setPositions(positions)
+    setCurrentStaffData(data)
+    setCurrentId(id)
+    setContextStaffMenu(true)
   }
 
   const onGlobalFilterChange = (e) => {
@@ -80,14 +103,14 @@ export default function Home () {
   const nameBodyTemplate = (data) => {
     return <div style={{paddingLeft:5}}><a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target="_blank" style={{textDecoration:"none"}}><span style={{color:"black",fontWeight:"600"}}>{data.name}</span></a>
     <p style={{fontSize:"13px",margin:"0px",lineHeight:"15px"}}>
-    {data.phone1 ? <div onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id)}>{data.phone1}<br></br></div> : <></>}
-    {data.phone2 ? <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id)}>{data.phone2}<br></br></div> : <></>}
-    {data.email ? <div onContextMenu={(e) => handleContextMenu(e,data.email,data._id)}>{data.email}</div> : <></>}
+    {data.phone1 && <div onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id)}>{data.phone1}<br></br></div>}
+    {data.phone2 && <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id)}>{data.phone2}<br></br></div>}
+    {data.email && <div onContextMenu={(e) => handleContextMenu(e,data.email,data._id)}>{data.email}</div>}
     </p></div>
   }
 
   const staffBodyTemplate = (data) => {
-    return data.staff.map((item,index) => {return <a href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target="_blank" style={{textDecoration:"none"}}><p key={index} style={{fontSize:"13px",margin:"0px",lineHeight:"13px"}}>{item.user}<br></br></p></a>})
+    return data.staff.map((item,index) => {return <a href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target="_blank" style={{textDecoration:"none"}}><p key={index} style={{fontSize:"13px",margin:"0px",lineHeight:"13px"}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{item.user}<br></br></p></a>})
   }
 
   const linkBodyTemplate = (data) => {
@@ -138,6 +161,13 @@ export default function Home () {
             <InputText type="text" className="p-inputtext-sm" value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
             <i className="pi pi-times ml-3" style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
             <i className="pi pi-check ml-3 mr-2" style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
+          </div>
+        ) : <></>}
+        {contextStaffMenu ? (
+          <div className="context-menu-wrap" style={{top:positions.y, left:positions.x}}>
+            <MultiSelect value={currentStaffData} onChange={(e) => setCurrentStaffData(e.value)} options={staff} optionLabel="user" display="chip" maxSelectedLabels={6} />
+            <i className="pi pi-times ml-3" style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
+            <i className="pi pi-check ml-3 mr-2" style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
           </div>
         ) : <></>}
       </main>
