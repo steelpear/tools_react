@@ -32,13 +32,12 @@ export default function Home (users) {
   const [currentStaffData, setCurrentStaffData] = useState(null)
   const [currentId, setCurrentId] = useState(null)
   const [hotels, setHotels] = useState(null)
-  const { data, error, isLoading } = useSWR('/api/hotels', fetcher)
+  const { data } = useSWR('/api/hotels', fetcher)
   const staff = JSON.parse(users.users)
 
   useEffect(() => { setHotels(data) }, [data])
 
-  if (error) return <div>Ошибка загрузки...</div>
-  if (isLoading) {return (<Loader />)}
+  if (!data) {return (<Loader />)}
 
   const handleContextMenu = (e,data,id) => {
     e.preventDefault()
