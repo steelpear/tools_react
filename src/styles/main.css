@@ -25,3 +25,13 @@
 .p-multiselect {
   max-width: 300px;
 }
+
+.p-datatable .p-datatable-loading-icon {
+  font-size: 4rem;
+  color: whitesmoke;
+}
+
+.label {
+  top: 11px;
+  font-size:11px;
+}

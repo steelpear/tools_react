@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import mongoose from 'mongoose'
 import User from '../models/User'
-import { Loader } from '../components/Loader'
+import Hotel from '../models/Hotel'
+import City from '../models/City'
+// import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
@@ -11,35 +13,50 @@ import { Button } from 'primereact/button'
 import { MultiSelect } from 'primereact/multiselect'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
-import useSWR from 'swr'
+// import useSWR from 'swr'
         
 const punycode = require('punycode/')
-const fetcher = (...args) => fetch(...args).then((res) => res.json())
+// const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
-export const getServerSideProps = async () => {
+export const getServerSideProps = async (context) => {
   if (mongoose.connections[0].readyState !== 1) {mongoose.connect(process.env.MONGODB_URL, {useNewUrlParser: true, useUnifiedTopology: true})}
+  const htls = []
+  const hotels = await Hotel.find({ puma: true }, 'name city email href sat_domain portal_link phone1 phone2 site_type sat_template sat_active temporarily_disable sat_finish')
+  const cities = await City.find({}, 'name')
+  const usrs = await User.find({public: true}, 'user hotels')
+  await hotels.forEach(hotel => {
+    const city = cities.filter(item => { return item._id == hotel.city[hotel.city.length - 1] })
+    const user = usrs.filter(item => { return item.hotels.includes(hotel._id) })
+    const staff = user.map(item => { return { user: item.user, _id: item._id } })
+    hotel.city = city[0] ? city[0].name : 'Нет региона'
+    hotel.staff = staff
+    hotel.site_type = hotel.site_type ? hotel.site_type : 'Нет сайта'
+    htls.push(hotel)
+  })
   const users = await User.find({public: true}, 'user')
-  return {props: {users: JSON.stringify(users)}}
+  return {props: {users: JSON.stringify(users), htls: JSON.stringify(htls)}}
 }
 
-export default function Home (users) {
+export default function Home ({...props}) {
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
   const [contextStaffMenu, setContextStaffMenu] = useState(false)
   const [positions, setPositions] = useState({x:0,y:0})
   const [currentData, setCurrentdata] = useState(null)
+  const [currentPhone, setCurrentPhone] = useState(null)
   const [currentStaffData, setCurrentStaffData] = useState(null)
   const [currentId, setCurrentId] = useState(null)
-  const [hotels, setHotels] = useState(null)
-  const { data } = useSWR('/api/hotels', fetcher)
-  const staff = JSON.parse(users.users)
+  const [hotels, setHotels] = useState([])
+  // const { data } = useSWR('/api/hotels', fetcher)
+  const staff = JSON.parse(props.users)
 
-  useEffect(() => { setHotels(data) }, [data])
+  useEffect(() => { setHotels(JSON.parse(props.htls)) }, [props.htls])
 
-  if (!data) {return (<Loader />)}
+  // if (!hotels) {return (<Loader />)}
 
-  const handleContextMenu = (e,data,id) => {
+
+  const handleContextMenu = (e,data,id,phone) => {
     e.preventDefault()
     const positions = {
       x: e.pageX,
@@ -47,9 +64,11 @@ export default function Home (users) {
     }
     setPositions(positions)
     setCurrentdata(data)
+    setCurrentPhone(phone)
     setCurrentId(id)
     setContextMenu(true)
   }
+
   const handleContextMenuStaff = (e,data,id) => {
     e.preventDefault()
     const positions = {
@@ -101,34 +120,34 @@ export default function Home (users) {
 
   const nameBodyTemplate = (data) => {
     return <div style={{paddingLeft:5}}><a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target="_blank" style={{textDecoration:"none"}}><span style={{color:"black",fontWeight:"600"}}>{data.name}</span></a>
-    <p style={{fontSize:"13px",margin:"0px",lineHeight:"15px"}}>
-    {data.phone1 && <div onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id)}>{data.phone1}<br></br></div>}
-    {data.phone2 && <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id)}>{data.phone2}<br></br></div>}
+    <div style={{fontSize:"13px",margin:"0px",lineHeight:"15px"}}>
+    {data.phone1 && <div onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id,"phone1")}>{data.phone1}<br></br></div>}
+    {data.phone2 && <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id,"phone2")}>{data.phone2}<br></br></div>}
     {data.email && <div onContextMenu={(e) => handleContextMenu(e,data.email,data._id)}>{data.email}</div>}
-    </p></div>
+    </div></div>
   }
 
   const staffBodyTemplate = (data) => {
-    return data.staff.map((item,index) => {return <a href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target="_blank" style={{textDecoration:"none"}}><p key={index} style={{fontSize:"13px",margin:"0px",lineHeight:"13px"}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{item.user}<br></br></p></a>})
+    return data.staff.map((item,index) => {return <a key={index} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target="_blank" style={{textDecoration:"none"}}><div style={{fontSize:"13px",margin:"0px",lineHeight:"13px"}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{item.user}<br></br></div></a>})
   }
 
   const linkBodyTemplate = (data) => {
-    if (data.site_type === "Сателлит") {return data.sat_domain ? <><a href={`http://${data.sat_domain}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.sat_domain)}</a></> : <></>}
-    if (data.site_type === "Классический" || data.site_type === "Автономный") {return data.href ? <><a href={`http://${data.href}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.href)}</a></> : <></>}
-    if (data.site_type === "Нет сайта") {return data.portal_link ? <><a href={`http://${data.portal_link.replace(/^https?:\/\//,'')}`} target="_blank" style={{textDecoration:"none"}}>{data.portal_link.replace(/^https?:\/\//,'')}</a></> : <><a href={`https://broniryem.ru/search?q=${data.name}`} target="_blank" style={{textDecoration:"none"}}>{`broniryem.ru/search?q=${data.name}`}</a></>}
-    return <></>
+    if (data.site_type === "Сателлит") {return data.sat_domain ? <a href={`http://${data.sat_domain}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.sat_domain)}</a> : <></>}
+    else if (data.site_type === "Классический" || data.site_type === "Автономный") {return data.href ? <a href={`http://${data.href}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.href)}</a> : <></>}
+    else if (data.site_type === "Нет сайта") {return data.portal_link ? <a href={`http://${data.portal_link.replace(/^https?:\/\//,'')}`} target="_blank" style={{textDecoration:"none"}}>{data.portal_link.replace(/^https?:\/\//,'')}</a> : <a href={`https://broniryem.ru/search?q=${data.name}`} target="_blank" style={{textDecoration:"none"}}>{`broniryem.ru/search?q=${data.name}`}</a>}
+    else { return <></> }
   }
 
   const siteBodyTemplate = (data) => {
     if (data.site_type === "Сателлит") {return <Image src="satellite.svg" width="20" />}
-    if (data.site_type === "Классический") {return <Image src="rocket.svg" width="20" />}
-    if (data.site_type === "Автономный") {return <Image src="aa.svg" width="20" />}
-    if (data.site_type === "Нет сайта") {return <Image src="logo.svg" width="20" />}
-    return <Image src="nothing.svg" alt="portal" width="20" />
+    else if (data.site_type === "Классический") {return <Image src="rocket.svg" width="20" />}
+    else if (data.site_type === "Автономный") {return <Image src="aa.svg" width="20" />}
+    else if (data.site_type === "Нет сайта") {return <Image src="logo.svg" width="20" />}
+    else { return <Image src="nothing.svg" alt="portal" width="20" /> }
   }
 
   const createBodyTemplate = (data) => {
-    return <span style={{fontSize:13}}>{data.sat_finish ? formatDate(data.sat_finish) : '---'}</span>
+    return <div style={{fontSize:13}}>{data.sat_finish ? formatDate(data.sat_finish) : '---'}</div>
   }
 
   const formatDate = (date) => {
@@ -146,18 +165,21 @@ export default function Home (users) {
     </Head>
     <MainLayout>
       <main>
-        <DataTable value={hotels} size="small" selectionMode="single" dataKey="_id" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,data.length]} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email','type','staff']} header={header} emptyMessage="Ничего не найдено." style={{fontSize:14}}>
-          <Column key="1" header="Объект" body={nameBodyTemplate} sortable></Column>
-          <Column key="2" field="city" header="Регион" sortable></Column>
-          <Column key="3" header="Ссылка" body={linkBodyTemplate}></Column>
-          <Column key="4" header="Менеджер" body={staffBodyTemplate}></Column>
-          <Column key="5" field="sat_template" header="Шаблон" sortable></Column>
-          <Column key="6" header="Сайт" body={siteBodyTemplate}></Column>
-          <Column key="7" header="Создан" body={createBodyTemplate}></Column>
+        <DataTable value={hotels} size="small" selectionMode="single" stripedRows removableSort paginator responsiveLayout="scroll" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,hotels.length]} loading={hotels.length < 1} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email']} header={header} emptyMessage="Ничего не найдено." style={{fontSize:14}}>
+          <Column header="Объект" body={nameBodyTemplate} sortable></Column>
+          <Column field="city" header="Регион" sortable></Column>
+          <Column header="Ссылка" body={linkBodyTemplate}></Column>
+          <Column header="Менеджер" body={staffBodyTemplate}></Column>
+          <Column field="sat_template" header="Шаблон" sortable></Column>
+          <Column header="Сайт" body={siteBodyTemplate}></Column>
+          <Column header="Создан" body={createBodyTemplate}></Column>
         </DataTable>
         {contextMenu ? (
           <div className="context-menu-wrap" style={{top:positions.y, left:positions.x}}>
-            <InputText type="text" className="p-inputtext-sm" value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
+            <span className="p-float-label">
+              <InputText id="phonesmail" type="text" className="p-inputtext-sm" label={currentPhone} value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
+              <label className="label" htmlFor="phonesmail">{currentPhone}</label>
+            </span>
             <i className="pi pi-times ml-3" style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
             <i className="pi pi-check ml-3 mr-2" style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
           </div>
