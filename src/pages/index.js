@@ -53,7 +53,7 @@ export default function Home ({...props}) {
 
   useEffect(() => { setHotels(JSON.parse(props.htls)) }, [props.htls])
 
-  // if (!hotels) {return (<Loader />)}
+  if (hotels.length < 1) {return (<Loader />)}
 
 
   const handleContextMenu = (e,data,id,phone) => {
