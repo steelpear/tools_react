@@ -28,12 +28,10 @@ const ToolbarEndContent = (
 )
 
   return (
-    <>
-      <main className="main">
+    <main className="main">
       <Toolbar start={ToolbarStartContent} end={ToolbarEndContent} style={{marginBottom:"10px"}}/>
-        {children}
-      </main>
+      {children}
       <ScrollTop className="bg-gray-500" />
-    </>
+    </main>
   )
 }

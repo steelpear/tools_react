@@ -177,7 +177,7 @@ export default function Home ({...props}) {
         {contextMenu ? (
           <div className="context-menu-wrap" style={{top:positions.y, left:positions.x}}>
             <span className="p-float-label">
-              <InputText id="phonesmail" type="text" className="p-inputtext-sm" label={currentPhone} value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
+              <InputText id="phonesmail" type="text" className="p-inputtext-sm" value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
               <label className="label" htmlFor="phonesmail">{currentPhone}</label>
             </span>
             <i className="pi pi-times ml-3" style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
