@@ -155,19 +155,19 @@ export default function Home () {
   }
 
   const linkBodyTemplate = (data) => {
-    if (data.site_type === "Сателлит") {return data.sat_domain ? <a href={`http://${data.sat_domain}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.sat_domain)}</a> : <></>}
+    if (data.site_type === "Сателлит" || data.site_type === "Автосателлит") {return data.sat_domain ? <a href={`http://${data.sat_domain}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.sat_domain)}</a> : <></>}
     else if (data.site_type === "Классический" || data.site_type === "Автономный") {return data.href ? <a href={`http://${data.href}`} target="_blank" style={{textDecoration:"none"}}>{punycode.toUnicode(data.href)}</a> : <></>}
     else if (data.site_type === "Нет сайта") {return data.portal_link ? <a href={`http://${data.portal_link.replace(/^https?:\/\//,'')}`} target="_blank" style={{textDecoration:"none"}}>{data.portal_link.replace(/^https?:\/\//,'')}</a> : <a href={`https://broniryem.ru/search?q=${data.name}`} target="_blank" style={{textDecoration:"none"}}>{`broniryem.ru/search?q=${data.name}`}</a>}
     else { return <></> }
   }
 
   const siteBodyTemplate = (data) => {
-    if (data.site_type === "Сателлит") {return <Image src="satellite.svg" width="20" />}
-    else if (data.site_type === "Классический") {return <Image src="rocket.svg" width="20" />}
-    else if (data.site_type === "Автономный") {return <Image src="aa.svg" width="20" />}
-    else if (data.site_type === "Автосателлит") {return <Image src="letter.svg" width="20" />}
-    else if (data.site_type === "Нет сайта") {return <Image src="logo.svg" width="20" />}
-    else { return <Image src="nothing.svg" alt="portal" width="20" /> }
+    if (data.site_type === "Сателлит") {return <div style={{textAlign:'center'}}><Image src="satellite.svg" width="20" /></div>}
+    else if (data.site_type === "Классический") {return <div style={{textAlign:'center'}}><Image src="rocket.svg" width="20" /></div>}
+    else if (data.site_type === "Автономный") {return <div style={{textAlign:'center'}}><Image src="aa.svg" width="20" /></div>}
+    else if (data.site_type === "Автосателлит") {return <div style={{textAlign:'center'}}><Image src="letter.svg" width="20" /></div>}
+    else if (data.site_type === "Нет сайта") {return <div style={{textAlign:'center'}}><Image src="logo.svg" width="20" /></div>}
+    else {return <div style={{textAlign:'center'}}><Image src="nothing.svg" alt="portal" width="20" /></div>}
   }
 
   return (
@@ -177,14 +177,14 @@ export default function Home () {
     </Head>
     <MainLayout>
       <main>
-        <DataTable value={hotels} size='small' selectionMode='checkbox' selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey="_id" stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,hotels.length]} loading={hotels.length < 1} filters={filters} filterDisplay="row" globalFilterFields={['name','city','phone1','phone2','email']} header={header} emptyMessage='Ничего не найдено.' style={{fontSize:14}}>
-          <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
-          <Column header="Объект" body={nameBodyTemplate} sortable></Column>
-          <Column field="city" header="Регион" sortable></Column>
-          <Column header="Ссылка" body={linkBodyTemplate}></Column>
-          <Column header="Менеджер" body={staffBodyTemplate}></Column>
-          <Column field="sat_template" header="Шаблон" sortable></Column>
-          <Column header="Сайт" body={siteBodyTemplate}></Column>
+        <DataTable value={hotels} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey="_id" stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,hotels.length]} filters={filters} globalFilterFields={['name','city','phone1','phone2','email']} header={header} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+          <Column selectionMode="multiple" headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }}></Column>
+          <Column header="Объект" body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }}></Column>
+          <Column field="city" header="Регион" sortable headerStyle={{ backgroundColor:'white' }}></Column>
+          <Column header="Ссылка" body={linkBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
+          <Column header="Менеджер" body={staffBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
+          <Column field="sat_template" header="Шаблон" sortable headerStyle={{ backgroundColor:'white' }}></Column>
+          <Column header="Сайт" body={siteBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
         </DataTable>
         {contextMenu ? (
           <div className="context-menu-wrap" style={{top:positions.y, left:positions.x}}>
