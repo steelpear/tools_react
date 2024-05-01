@@ -21,11 +21,7 @@ export function MainLayout({ children }) {
     </div>
   )
 
-const ToolbarEndContent = (
-    <>
-      <Button icon="pi pi-arrow-right" severity="secondary" rounded text />
-    </>
-)
+const ToolbarEndContent = (<Button icon="pi pi-arrow-right" severity="secondary" rounded text />)
 
   return (
     <main className="main">

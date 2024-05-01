@@ -35,3 +35,30 @@
   top: 11px !important;
   font-size: 11px !important;
 }
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item-group {
+	padding: 0.3rem 1rem;
+  color: #333;
+  background: lightsteelblue;
+  font-weight: 600;
+  font-size: 14px;
+}
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item {
+	padding: 0.2rem 1rem;
+	color: #333;
+	font-size: 14px;
+}
+.p-multiselect-panel .p-multiselect-header {
+	padding: 0.3rem 1rem;
+}
+
+.pi {
+  font-size: .8rem;
+}
+
+.p-multiselect.p-multiselect-chip .p-multiselect-token {
+  padding: 0.1rem 0.3rem;
+  margin-right: 0;
+  color: #333;
+  font-size: 12px;
+}

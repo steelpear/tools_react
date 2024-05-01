@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import axios from 'axios'
 import Head from 'next/head'
 import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
@@ -9,12 +10,11 @@ import { InputText } from 'primereact/inputtext'
 import { MultiSelect } from 'primereact/multiselect'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
-import useSWR from 'swr'
 
-const fetcher = (...args) => fetch(...args).then((res) => res.json())
 const punycode = require('punycode/')
 
 export default function Home () {
+  const [isLoading, setIsLoading] = useState(true)
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
@@ -24,59 +24,52 @@ export default function Home () {
   const [currentPhone, setCurrentPhone] = useState(null)
   const [currentStaffData, setCurrentStaffData] = useState(null)
   const [currentId, setCurrentId] = useState(null)
+  // const [cities, setCities] = useState([])
   const [hotels, setHotels] = useState([])
   const [selectedHotels, setSelectedHotels] = useState(null)
+  const [selectedUsers, setSelectedUsers] = useState(null)
+  const [staffList, setStaffList] = useState(null)
 
-  const getHotels = () => {
-    const { data, error, isLoading } = useSWR('/api/hotels', fetcher)
-    return {
-      htls: data,
-      isLoadingHotels: isLoading,
-      isErrorHotels: error
-    }
+  const getData = async () => {
+    const outhtls = []
+    const htlls = await axios.get('/api/hotels')
+    const htls = await htlls.data
+    const cts = await axios.get('/api/cities')
+    const cities = await cts.data
+    const usrs = await axios.get('/api/users')
+    const users = await usrs.data
+    htls.forEach(hotel => {
+      const city = cities.filter(item => { return item._id == hotel.city[hotel.city.length - 1] })
+      const user = users.filter(item => { return item.hotels.includes(hotel._id) })
+      const staff = user.map(item => { return { user: item.user, _id: item._id } })
+      hotel.city = city[0] ? city[0].name : 'Нет региона'
+      hotel.staff = staff
+      outhtls.push(hotel)
+    })
+    setHotels(outhtls)
+    setIsLoading(false)
   }
-  
-  const getCities = () => {
-    const { data, error, isLoading } = useSWR('/api/cities', fetcher)
-    return {
-      cities: data,
-      isLoadingCities: isLoading,
-      isErrorCities: error
-    }
-  }
-  
-  const getUsers = () => {
-    const { data, error, isLoading } = useSWR('/api/users', fetcher)
-    return {
-      users: data,
-      isLoadingUsers: isLoading,
-      isErrorUsers: error
-    }
-  }
-  const { htls, isLoadingHotels } = getHotels()
-  const { cities, isLoadingCities } = getCities()
-  const { users, isLoadingUsers } = getUsers()
 
-  const prepareData = () => {
-    if (!isLoadingHotels && !isLoadingCities && !isLoadingUsers) {
-      const outhtls = []
-        htls.forEach(hotel => {
-        const city = cities.filter(item => { return item._id == hotel.city[hotel.city.length - 1] })
-        const user = users.filter(item => { return item.hotels.includes(hotel._id) })
-        const staff = user.map(item => { return { user: item.user, _id: item._id } })
-        hotel.city = city[0] ? city[0].name : 'Нет региона'
-        hotel.staff = staff
-        outhtls.push(hotel)
-      })
-      setHotels(outhtls)
-    }
-  }
+const getStuffList = async () => {
+  const out = []
+  const psts = await axios.get('/api/posts')
+  const posts = await psts.data.sort((a, b) => a.post_num > b.post_num ? 1 : -1)
+  posts.forEach(post => {
+    out.push(
+      {
+        label: `Пост ${post.post_num}`,
+        items: post.staff_id.map((item,index) => { return { label: post.staff_name[index], value: post.staff_id[index] } })
+      }
+    )
+  })
+  setStaffList(out)
+}
 
   useEffect(() => {
-    prepareData()
-  },[!isLoadingHotels && !isLoadingCities && !isLoadingUsers])
+    getData()
+  },[])
 
-  if (isLoadingHotels || isLoadingCities || isLoadingUsers) {return (<Loader />)}
+  if (isLoading) {return (<Loader />)}
 
     const handleContextMenu = (e,data,id,phone) => {
     e.preventDefault()
@@ -94,10 +87,11 @@ export default function Home () {
   const handleContextMenuStaff = (e,data,id) => {
     e.preventDefault()
     const positions = {
-      x: e.pageX,
+      x: e.pageX - 200,
       y: e.pageY
     }
     setPositions(positions)
+    getStuffList()
     setCurrentStaffData(data)
     setCurrentId(id)
     setContextStaffMenu(true)
@@ -198,7 +192,7 @@ export default function Home () {
         ) : <></>}
         {contextStaffMenu ? (
           <div className="context-menu-wrap" style={{top:positions.y, left:positions.x}}>
-            <MultiSelect value={currentStaffData} onChange={(e) => setCurrentStaffData(e.value)} options={staff} optionLabel="user" display="chip" maxSelectedLabels={6} />
+            <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel="label" optionGroupLabel="label" optionGroupChildren="items" display="chip" maxSelectedLabels={3} placeholder="Менеджер" className="w-full md:w-20rem" />
             <i className="pi pi-times ml-3" style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
             <i className="pi pi-check ml-3 mr-2" style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
           </div>
