@@ -192,7 +192,7 @@ const getStuffList = async () => {
         ) : <></>}
         {contextStaffMenu ? (
           <div className="context-menu-wrap" style={{top:positions.y, left:positions.x}}>
-            <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel="label" optionGroupLabel="label" optionGroupChildren="items" display="chip" maxSelectedLabels={3} placeholder="Менеджер" className="w-full md:w-20rem" />
+            <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel="label" optionGroupLabel="label" optionGroupChildren="items" display="chip" filter placeholder="Менеджер" className="w-full md:w-20rem" />
             <i className="pi pi-times ml-3" style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
             <i className="pi pi-check ml-3 mr-2" style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
           </div>
