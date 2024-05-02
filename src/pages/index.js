@@ -159,7 +159,7 @@ const getStuffList = async () => {
     if (data.site_type === "Сателлит") {return <div style={{textAlign:'center'}}><Image src="satellite.svg" width="20" /></div>}
     else if (data.site_type === "Классический") {return <div style={{textAlign:'center'}}><Image src="rocket.svg" width="20" /></div>}
     else if (data.site_type === "Автономный") {return <div style={{textAlign:'center'}}><Image src="aa.svg" width="20" /></div>}
-    else if (data.site_type === "Автосателлит") {return <div style={{textAlign:'center'}}><Image src="letter.svg" width="20" /></div>}
+    else if (data.site_type === "Автосателлит"|| data.sat_template === "aleanus") {return <div style={{textAlign:'center'}}><Image src="letter.svg" width="20" /></div>}
     else if (data.site_type === "Нет сайта") {return <div style={{textAlign:'center'}}><Image src="logo.svg" width="20" /></div>}
     else {return <div style={{textAlign:'center'}}><Image src="nothing.svg" alt="portal" width="20" /></div>}
   }
