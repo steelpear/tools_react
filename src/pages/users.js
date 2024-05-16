@@ -7,7 +7,7 @@ export default function Users () {
     <Head>
       <title>Пользователи / Инструменты</title>
     </Head>
-    <MainLayout>
+    <MainLayout title='Пользователи'>
       <main>
         Users
       </main>

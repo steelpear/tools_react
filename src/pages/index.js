@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+// import useSWR from 'swr'
+import useSWRMutation from 'swr/mutation'
 import Head from 'next/head'
 import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
-// import { Button } from 'primereact/button'
+import { Button } from 'primereact/button'
 import { MultiSelect } from 'primereact/multiselect'
+import { SelectButton } from 'primereact/selectbutton'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
+import 'primeicons/primeicons.css'
 
 const punycode = require('punycode/')
 
 export default function Home () {
-  const [isLoading, setIsLoading] = useState(true)
+  const btnOptions = ['PumaOn', 'PumaOff','All']
+  const [btnValue, setBtnValue] = useState(btnOptions[0])
+  const [filter, setFilter] = useState({puma: true})
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
@@ -24,54 +30,52 @@ export default function Home () {
   const [currentPhone, setCurrentPhone] = useState(null)
   const [currentStaffData, setCurrentStaffData] = useState(null)
   const [currentId, setCurrentId] = useState(null)
-  // const [cities, setCities] = useState([])
-  const [hotels, setHotels] = useState([])
   const [selectedHotels, setSelectedHotels] = useState(null)
   const [selectedUsers, setSelectedUsers] = useState(null)
   const [staffList, setStaffList] = useState(null)
-
   const getData = async () => {
-    const outhtls = []
-    const htlls = await axios.get('/api/hotels')
-    const htls = await htlls.data
-    const cts = await axios.get('/api/cities')
-    const cities = await cts.data
-    const usrs = await axios.get('/api/users')
-    const users = await usrs.data
-    htls.forEach(hotel => {
-      const city = cities.filter(item => { return item._id == hotel.city[hotel.city.length - 1] })
-      const user = users.filter(item => { return item.hotels.includes(hotel._id) })
-      const staff = user.map(item => { return { user: item.user, _id: item._id } })
-      hotel.city = city[0] ? city[0].name : 'Нет региона'
-      hotel.staff = staff
-      outhtls.push(hotel)
+    const hotels = await axios.post('https://broniryem.ru/api/Tools/hotels', {filter})
+    return hotels.data
+  }
+  // const { data: hotels, mutate, error, isLoading } = useSWR('https://broniryem.ru/api/Tools/hotels', getData)
+  const { data: hotels, error, trigger, isMutating } = useSWRMutation('https://broniryem.ru/api/Tools/hotels', getData)
+
+  const getStuffList = async () => {
+    const out = []
+    const psts = await axios.get('/api/posts')
+    const posts = await psts.data
+    posts.forEach(post => {
+      out.push(
+        {
+          label: `Пост ${post.post_num}`,
+          items: post.staff_id.map((item,index) => { return { label: post.staff_name[index], value: post.staff_id[index] } }).sort((a, b) => a.label > b.label ? 1 : -1)
+        }
+      )
     })
-    setHotels(outhtls)
-    setIsLoading(false)
+    setStaffList(out)
   }
 
-const getStuffList = async () => {
-  const out = []
-  const psts = await axios.get('/api/posts')
-  const posts = await psts.data.sort((a, b) => a.post_num > b.post_num ? 1 : -1)
-  posts.forEach(post => {
-    out.push(
-      {
-        label: `Пост ${post.post_num}`,
-        items: post.staff_id.map((item,index) => { return { label: post.staff_name[index], value: post.staff_id[index] } })
-      }
-    )
-  })
-  setStaffList(out)
-}
-
   useEffect(() => {
-    getData()
-  },[])
+    // if (btnValue === 'PumaOn') {setFilter({puma: true})}
+    // else if (btnValue === 'PumaOff') {setFilter({puma: false})}
+    // else {setFilter(null)}
+    // mutate(getData)
+    trigger()
+  },[filter])
 
-  if (isLoading) {return (<Loader />)}
+  if (error) return <div>Ошибка загрузки...</div>
+  // if (isLoading) {return (<Loader />)}
+  if (isMutating) {return (<Loader />)}
 
-    const handleContextMenu = (e,data,id,phone) => {
+  const handleSelectButton = (value) => {
+    setBtnValue(value)
+    if (value === 'PumaOn') {setFilter({puma: true})}
+    else if (value === 'PumaOff') {setFilter({puma: false})}
+    else {setFilter(null)}
+    // await trigger()
+  }
+
+  const handleContextMenu = (e,data,id,phone) => {
     e.preventDefault()
     const positions = {
       x: e.pageX,
@@ -86,13 +90,15 @@ const getStuffList = async () => {
 
   const handleContextMenuStaff = (e,data,id) => {
     e.preventDefault()
+    const stf = data.map(item => {return ({label: item.lastname ? item.lastname : item.user, _id: item._id})})
+    console.log(stf)
     const positions = {
       x: e.pageX - 200,
       y: e.pageY
     }
     setPositions(positions)
     getStuffList()
-    setCurrentStaffData(data)
+    setCurrentStaffData(stf)
     setCurrentId(id)
     setContextStaffMenu(true)
   }
@@ -108,17 +114,18 @@ const getStuffList = async () => {
   const header = () => {
     return (
       <div className="flex align-items-center justify-content-between">
-        <div className="flex">
-          <Image src="letter.svg" alt="portal" width="25" style={{marginLeft:"10px"}}/>
-          <span style={{ margin: "0 15px 0 5px", fontWeight: "600" }}>Автосателлит</span>
-          <Image src="satellite.svg" alt="portal" width="25"/>
-          <span style={{ margin: "0 15px 0 5px", fontWeight: "600" }}>Сателлит</span>
-          <Image src="rocket.svg" alt="portal" width="25" />
-          <span style={{ margin: "0 15px 0 5px", fontWeight: "600" }}>Классический</span>
-          <Image src="aa.svg" alt="portal" width="25" />
-          <span style={{ margin: "0 15px 0 5px", fontWeight: "600" }}>Автономный</span>
-          <Image src="logo.svg" alt="portal" width="25" />
-          <span style={{ margin: "0 0 0 5px", fontWeight: "600" }}>Нет сайта</span>
+        <div className="flex align-items-center">
+          <Image src="letter.svg" alt="portal" width="20" style={{marginLeft:"10px"}}/>
+          <span style={{ margin: "0 10px 0 3px", fontWeight: "400" }}>Автосателлит</span>
+          <Image src="satellite.svg" alt="portal" width="20"/>
+          <span style={{ margin: "0 10px 0 3px", fontWeight: "400" }}>Сателлит</span>
+          <Image src="rocket.svg" alt="portal" width="20" />
+          <span style={{ margin: "0 10px 0 3px", fontWeight: "400" }}>Классический</span>
+          <Image src="aa.svg" alt="portal" width="20" />
+          <span style={{ margin: "0 10px 0 3px", fontWeight: "400" }}>Автономный</span>
+          <Image src="logo.svg" alt="portal" width="20" />
+          <span style={{ margin: "0 0 0 3px", fontWeight: "400" }}>Нет сайта</span>
+          <SelectButton value={btnValue} onChange={(e) => handleSelectButton(e.value)} options={btnOptions} style={{marginInline: 10}} />
         </div>
         <div className="flex">
           <span className='p-input-icon-left p-input-icon-right'>
@@ -145,7 +152,7 @@ const getStuffList = async () => {
   }
 
   const staffBodyTemplate = (data) => {
-    return data.staff.map((item,index) => {return <a key={index} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target="_blank" style={{textDecoration:"none"}}><div style={{fontSize:"13px",margin:"0px",lineHeight:"13px"}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{item.user}<br></br></div></a>})
+    return data.staff.map(item => {return <a key={item._id} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target="_blank" style={{textDecoration:"none"}}><div style={{fontSize:".78rem",margin:"0px",lineHeight:".77rem"}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{item.lastname ? item.lastname : item.user}<br></br></div></a>})
   }
 
   const linkBodyTemplate = (data) => {
@@ -159,25 +166,30 @@ const getStuffList = async () => {
     if (data.site_type === "Сателлит") {return <div style={{textAlign:'center'}}><Image src="satellite.svg" width="20" /></div>}
     else if (data.site_type === "Классический") {return <div style={{textAlign:'center'}}><Image src="rocket.svg" width="20" /></div>}
     else if (data.site_type === "Автономный") {return <div style={{textAlign:'center'}}><Image src="aa.svg" width="20" /></div>}
-    else if (data.site_type === "Автосателлит"|| data.sat_template === "aleanus") {return <div style={{textAlign:'center'}}><Image src="letter.svg" width="20" /></div>}
+    else if (data.site_type === "Автосателлит") {return <div style={{textAlign:'center'}}><Image src="letter.svg" width="20" /></div>}
     else if (data.site_type === "Нет сайта") {return <div style={{textAlign:'center'}}><Image src="logo.svg" width="20" /></div>}
     else {return <div style={{textAlign:'center'}}><Image src="nothing.svg" alt="portal" width="20" /></div>}
+  }
+
+  const pumaBodyTemplate = (data) => {
+    return data.puma ? <Button icon="pi pi-check-circle" severity="success" rounded text onClick={() => setVisibleSide(true)} /> : <Button icon="pi pi-power-off" severity="danger" rounded text onClick={() => setVisibleSide(true)} />
   }
 
   return (
     <>
     <Head>
-      <title>Все сайты / Инструменты</title>
+      <title>Все объекты / Инструменты</title>
     </Head>
-    <MainLayout>
+    <MainLayout count={hotels ? hotels.length : null} title='Все объекты / Главная'>
       <main>
-        <DataTable value={hotels} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey="_id" stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,hotels.length]} filters={filters} globalFilterFields={['name','city','phone1','phone2','email']} header={header} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+        <DataTable value={hotels} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey="_id" stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown" currentPageReportTemplate="Строки {first} - {last} из {totalRecords}" rows={50} rowsPerPageOptions={[50,100,hotels ? hotels.length : 0]} filters={filters} globalFilterFields={['name','city','phone1','phone2','sat_domain','href','portal_link','staff','sat_template']} header={header} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
           <Column selectionMode="multiple" headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }}></Column>
           <Column header="Объект" body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }}></Column>
           <Column field="city" header="Регион" sortable headerStyle={{ backgroundColor:'white' }}></Column>
           <Column header="Ссылка" body={linkBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
           <Column header="Менеджер" body={staffBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
-          <Column field="sat_template" header="Шаблон" sortable headerStyle={{ backgroundColor:'white' }}></Column>
+          <Column header="Шаблон" field="sat_template" sortable headerStyle={{ backgroundColor:'white' }}></Column>
+          <Column header="Пума" body={pumaBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
           <Column header="Сайт" body={siteBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
         </DataTable>
         {contextMenu ? (
@@ -191,10 +203,10 @@ const getStuffList = async () => {
           </div>
         ) : <></>}
         {contextStaffMenu ? (
-          <div className="context-menu-wrap" style={{top:positions.y, left:positions.x}}>
-            <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel="label" optionGroupLabel="label" optionGroupChildren="items" display="chip" filter placeholder="Менеджер" className="w-full md:w-20rem" />
-            <i className="pi pi-times ml-3" style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
-            <i className="pi pi-check ml-3 mr-2" style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
+          <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
+            <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel='label' optionValue='value' optionGroupLabel='label' optionGroupChildren='items' display='chip' filter placeholder='Менеджер' className='w-full md:w-20rem' showClear dataKey='item._id' />
+            <i className='pi pi-times ml-3' style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
+            <i className='pi pi-check ml-3 mr-2' style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
           </div>
         ) : <></>}
       </main>

@@ -13,6 +13,7 @@
 }
 .skeleton_wrap {padding: 0 20px 20px 20px;}
 .context-menu-wrap {
+  max-width: 400px;
   background: white;
   padding: 5px;
   position: absolute;
@@ -57,8 +58,8 @@
 }
 
 .p-multiselect.p-multiselect-chip .p-multiselect-token {
-  /* padding: 0.1rem 0.3rem; */
-  margin-right: 0;
+  padding: 0.3rem 0.5rem;
+  margin: 1px;
   color: #333;
   font-size: 12px;
 }
@@ -67,6 +68,10 @@
   white-space: normal;
 }
 
-.p-multiselect .p-multiselect-label {
-  padding: 0.6rem 0.5rem;
+.p-multiselect .p-multiselect-clear-icon {
+  right: 2rem;
+}
+
+.p-multiselect .p-multiselect-trigger {
+  width: 2rem;
 }
