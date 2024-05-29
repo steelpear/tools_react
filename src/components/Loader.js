@@ -3,7 +3,7 @@ import Head from 'next/head'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Skeleton } from 'primereact/skeleton'
 
-export const Loader = () => {
+export const Loader = ({...params}) => {
   const [height, setHeight] = useState(null)
   const [width, setWidth] = useState(null)
   const size = 120
@@ -34,7 +34,7 @@ export const Loader = () => {
         <Head>
           <title>Загрузка / Инструменты</title>
         </Head>
-        <Row />
+        {!params.mutate ? <Row /> : <></>}
         <div style={{ position: "absolute", top: (height / 2) - (size / 2), left: (width / 2) - (size / 2)}}>
           <ProgressSpinner style={{width: size, height: size}} strokeWidth="3" />
         </div>

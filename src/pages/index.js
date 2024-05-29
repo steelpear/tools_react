@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
-// import useSWR from 'swr'
-import useSWRMutation from 'swr/mutation'
+import useSWR, { useSWRConfig } from 'swr'
+import useSWRImmutable from 'swr/immutable'
 import Head from 'next/head'
 import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
@@ -15,12 +14,14 @@ import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
 import 'primeicons/primeicons.css'
 
+const fetcher = (...args) => fetch(...args).then((res) => res.json())
 const punycode = require('punycode/')
 
 export default function Home () {
   const btnOptions = ['PumaOn', 'PumaOff','All']
   const [btnValue, setBtnValue] = useState(btnOptions[0])
-  const [filter, setFilter] = useState({puma: true})
+  const [isMut, setIsMut] = useState(false)
+  // const [filter, setFilter] = useState({puma: true})
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
@@ -33,17 +34,37 @@ export default function Home () {
   const [selectedHotels, setSelectedHotels] = useState(null)
   const [selectedUsers, setSelectedUsers] = useState(null)
   const [staffList, setStaffList] = useState(null)
-  const getData = async () => {
-    const hotels = await axios.post('https://broniryem.ru/api/Tools/hotels', {filter})
-    return hotels.data
-  }
-  // const { data: hotels, mutate, error, isLoading } = useSWR('https://broniryem.ru/api/Tools/hotels', getData)
-  const { data: hotels, error, trigger, isMutating } = useSWRMutation('https://broniryem.ru/api/Tools/hotels', getData)
 
-  const getStuffList = async () => {
+  const { mutate } = useSWRConfig()
+
+  const { data: hotels, error } = useSWRImmutable('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false})
+
+  const { data: posts } = useSWRImmutable('/api/posts', fetcher)
+
+  useEffect(() => {
+    const checkBtn = () => {
+      if (btnValue === 'PumaOn') return {puma: true}
+      else if (btnValue === 'PumaOff') return {puma: false}
+      else return null
+    }
+    const mut = async () => {
+      setIsMut(true)
+      await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
+        method: 'POST',
+        headers: { 'Content-type': 'application/json; charset=UTF-8' },
+        body: JSON.stringify({ filter })
+      }), {revalidate: false})
+      setIsMut(false)
+    }
+    const filter = checkBtn()
+    mut()
+  }, [btnValue])
+
+  if (error) return <div>{error.message}</div>
+  if (!hotels) return <Loader mutate={false} />
+
+  const getStuffList = () => {
     const out = []
-    const psts = await axios.get('/api/posts')
-    const posts = await psts.data
     posts.forEach(post => {
       out.push(
         {
@@ -53,26 +74,6 @@ export default function Home () {
       )
     })
     setStaffList(out)
-  }
-
-  useEffect(() => {
-    // if (btnValue === 'PumaOn') {setFilter({puma: true})}
-    // else if (btnValue === 'PumaOff') {setFilter({puma: false})}
-    // else {setFilter(null)}
-    // mutate(getData)
-    trigger()
-  },[filter])
-
-  if (error) return <div>Ошибка загрузки...</div>
-  // if (isLoading) {return (<Loader />)}
-  if (isMutating) {return (<Loader />)}
-
-  const handleSelectButton = (value) => {
-    setBtnValue(value)
-    if (value === 'PumaOn') {setFilter({puma: true})}
-    else if (value === 'PumaOff') {setFilter({puma: false})}
-    else {setFilter(null)}
-    // await trigger()
   }
 
   const handleContextMenu = (e,data,id,phone) => {
@@ -125,7 +126,7 @@ export default function Home () {
           <span style={{ margin: "0 10px 0 3px", fontWeight: "400" }}>Автономный</span>
           <Image src="logo.svg" alt="portal" width="20" />
           <span style={{ margin: "0 0 0 3px", fontWeight: "400" }}>Нет сайта</span>
-          <SelectButton value={btnValue} onChange={(e) => handleSelectButton(e.value)} options={btnOptions} style={{marginInline: 10}} />
+          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} options={btnOptions} style={{marginInline: 10}} />
         </div>
         <div className="flex">
           <span className='p-input-icon-left p-input-icon-right'>
@@ -134,6 +135,7 @@ export default function Home () {
             {globalFilterValue ? <><i className="pi pi-times" onClick={clearFilter} style={{ cursor: 'pointer' }} /></> : <><i className="pi pi-times" style={{ color: 'lightgrey' }} /></>}
           </span>
         </div>
+        {isMut ? <Loader mutate={true} /> : <></>}
       </div>
     )
   }
