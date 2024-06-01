@@ -1,7 +1,6 @@
 import { Schema, model, models } from 'mongoose'
 
 const Hotel = new Schema({
-  _id: String,
   name: String,
   puma: Boolean,
   city: Array,

@@ -8,7 +8,6 @@ import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
 import { Button } from 'primereact/button'
-import { Tooltip } from 'primereact/tooltip'
 import { MultiSelect } from 'primereact/multiselect'
 import { SelectButton } from 'primereact/selectbutton'
 import { FilterMatchMode } from 'primereact/api'
@@ -37,7 +36,6 @@ export default function Home () {
   const [staffList, setStaffList] = useState(null)
 
   const { mutate } = useSWRConfig()
-  const tooltip = {Tooltip}
 
   const { data: hotels, error } = useSWRImmutable('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false})
 
@@ -106,6 +104,20 @@ export default function Home () {
     setContextStaffMenu(true)
   }
 
+  const handlePumaState = async (id, puma) => {
+    const response = await fetch('/api/updatehotel', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ id, data: { puma: !puma } })
+    })
+    setBtnValue(response ? 'PumaOn' : 'PumaOff')
+    // await mutate('/api/updatehotel', fetcher('/api/updatehotel', {
+    //   method: 'POST',
+    //   headers: { 'Content-type': 'application/json; charset=UTF-8' },
+    //   body: JSON.stringify({ id, data: { puma: !puma } })
+    //   }))
+  }
+
   const onGlobalFilterChange = (e) => {
     const value = e.target.value
     let _filters = { ...filters }
@@ -167,7 +179,7 @@ export default function Home () {
   }
 
   const siteBodyTemplate = (data) => {
-    if (data.site_type === 'Сателлит') {return <div style={{textAlign:'center'}} tooltip={data.site_type} tooltipOptions={{ position: 'top' }}><Image src='satellite.svg' width='20' /></div>}
+    if (data.site_type === 'Сателлит') {return <div style={{textAlign:'center'}}><Image src='satellite.svg' width='20' /></div>}
     else if (data.site_type === 'Классический') {return <div style={{textAlign:'center'}}><Image src='rocket.svg' width='20' /></div>}
     else if (data.site_type === 'Автономный') {return <div style={{textAlign:'center'}}><Image src='aa.svg' width='20' /></div>}
     else if (data.site_type === 'Автосателлит') {return <div style={{textAlign:'center'}}><Image src='letter.svg' width='20' /></div>}
@@ -176,7 +188,7 @@ export default function Home () {
   }
 
   const pumaBodyTemplate = (data) => {
-    return data.puma ? <Button icon='pi pi-check-circle' severity='success' rounded text onClick={() => setVisibleSide(true)} /> : <Button icon='pi pi-power-off' severity='danger' rounded text onClick={() => setVisibleSide(true)} />
+    return data.puma ? <Button icon='pi pi-check-circle' severity='success' rounded text onClick={() => handlePumaState(data._id, data.puma)} /> : <Button icon='pi pi-power-off' severity='danger' rounded text onClick={() => handlePumaState(data._id, data.puma)} />
   }
 
   return (

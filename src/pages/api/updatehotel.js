@@ -2,8 +2,9 @@ import connectDB from '../../middleware/mongodb'
 import Hotel from '../../models/Hotel'
 
 const handler = async (req, res) => {
-  const hotels = await Hotel.find({ puma: true }, 'name city href sat_domain portal_link phone1 phone2 site_type sat_template')
-  res.send(hotels)
+  const { id, data } = req.body
+  const response = await Hotel.findByIdAndUpdate(id, data, {new: true})
+  res.send(response.puma)
 }
 
 export default connectDB(handler)
