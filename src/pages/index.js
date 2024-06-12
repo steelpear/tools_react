@@ -18,10 +18,13 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json())
 const punycode = require('punycode/')
 
 export default function Home () {
-  const btnOptions = ['PumaOn', 'PumaOff','All']
-  const [btnValue, setBtnValue] = useState(btnOptions[0])
+  const btnOptions = [
+    {icon: 'pi pi-check-circle', value: 'PumaOn'},
+    {icon: 'pi pi-power-off', value: 'PumaOff'},
+    {icon: 'pi pi-align-justify', value: 'All'}
+  ]
+  const [btnValue, setBtnValue] = useState(btnOptions[0].value)
   const [isMut, setIsMut] = useState(false)
-  // const [filter, setFilter] = useState({puma: true})
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
@@ -35,9 +38,9 @@ export default function Home () {
   const [selectedUsers, setSelectedUsers] = useState(null)
   const [staffList, setStaffList] = useState(null)
 
-  const { mutate } = useSWRConfig()
+  // const { mutate } = useSWRConfig()
 
-  const { data: hotels, error } = useSWRImmutable('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false})
+  const { data: hotels, error, mutate } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
 
   const { data: posts } = useSWRImmutable('/api/posts', fetcher)
 
@@ -45,11 +48,11 @@ export default function Home () {
     const checkBtn = () => {
       if (btnValue === 'PumaOn') return {puma: true}
       else if (btnValue === 'PumaOff') return {puma: false}
-      else return null
+      else return 'All'
     }
-    const mut = async () => {
+    const mut = async (filter) => {
       setIsMut(true)
-      await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
+      await mutate(fetcher('https://broniryem.ru/api/Tools/hotels', {
         method: 'POST',
         headers: { 'Content-type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({ filter })
@@ -57,8 +60,8 @@ export default function Home () {
       setIsMut(false)
     }
     const filter = checkBtn()
-    mut()
-  }, [btnValue])
+    mut(filter)
+  }, [btnValue]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) return <div>{error.message}</div>
   if (!hotels) return <Loader mutate={false} />
@@ -78,11 +81,7 @@ export default function Home () {
 
   const handleContextMenu = (e,data,id,phone) => {
     e.preventDefault()
-    const positions = {
-      x: e.pageX,
-      y: e.pageY
-    }
-    setPositions(positions)
+    setPositions({x:e.pageX,y:e.pageY})
     setCurrentdata(data)
     setCurrentPhone(phone)
     setCurrentId(id)
@@ -92,12 +91,7 @@ export default function Home () {
   const handleContextMenuStaff = (e,data,id) => {
     e.preventDefault()
     const stf = data.map(item => {return ({label: item.lastname ? item.lastname : item.user, _id: item._id})})
-    console.log(stf)
-    const positions = {
-      x: e.pageX - 200,
-      y: e.pageY
-    }
-    setPositions(positions)
+    setPositions({x:e.pageX-200,y:e.pageY})
     getStuffList()
     setCurrentStaffData(stf)
     setCurrentId(id)
@@ -105,17 +99,13 @@ export default function Home () {
   }
 
   const handlePumaState = async (id, puma) => {
-    const response = await fetch('/api/updatehotel', {
+    const res = await fetch('/api/updatehotel', {
       method: 'POST',
       headers: { 'Content-type': 'application/json; charset=UTF-8' },
       body: JSON.stringify({ id, data: { puma: !puma } })
     })
+    const response = await res.json()
     setBtnValue(response ? 'PumaOn' : 'PumaOff')
-    // await mutate('/api/updatehotel', fetcher('/api/updatehotel', {
-    //   method: 'POST',
-    //   headers: { 'Content-type': 'application/json; charset=UTF-8' },
-    //   body: JSON.stringify({ id, data: { puma: !puma } })
-    //   }))
   }
 
   const onGlobalFilterChange = (e) => {
@@ -124,6 +114,10 @@ export default function Home () {
     _filters['global'].value = value
     setFilters(_filters)
     setGlobalFilterValue(value)
+  }
+
+  const selectButtonTemplate = (option) => {
+    return <i className={option.icon} style={{lineHeight: 'normal'}}></i>
   }
 
   const header = () => {
@@ -140,7 +134,7 @@ export default function Home () {
           <span style={{ margin: '0 10px 0 3px', fontWeight: '400' }}>Автономный</span>
           <Image src='logo.svg' alt='portal' width='20' />
           <span style={{ margin: '0 0 0 3px', fontWeight: '400' }}>Нет сайта</span>
-          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} options={btnOptions} style={{marginInline: 10}} />
+          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{ position: 'top' }}style={{marginInline: 10}} />
         </div>
         <div className='flex'>
           <span className='p-input-icon-left p-input-icon-right'>
@@ -160,15 +154,19 @@ export default function Home () {
   }
 
   const nameBodyTemplate = (data) => {
-    return <div><a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target='_blank' style={{textDecoration:'none'}}><span style={{fontWeight:'500'}}>{data.name}</span></a>
-    <div style={{fontSize:'12px',margin:'0px',lineHeight:'15px',color:'#444',fontWeight:500}}>
-    {data.phone1 && <div onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id,'phone1')}>{data.phone1}<br></br></div>}
-    {data.phone2 && <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id,'phone2')}>{data.phone2}</div>}
-    </div></div>
+    return (
+    <div>
+      <a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target='_blank' style={{textDecoration:'none'}}><span style={{fontWeight:'500'}}>{data.name}</span></a>
+      {data.phone1 || data.phone2 ?
+      <div style={{fontSize:'12px',margin:'0px',lineHeight:'15px',color:'#444',fontWeight:500}}>
+        {data.phone1 && <div onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id,'phone1')}>{data.phone1}<br></br></div>}
+        {data.phone2 && <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id,'phone2')}>{data.phone2}</div>}
+      </div> : <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id,'none')}><i className='pi pi-minus' style={{lineHeight: 'normal'}} /></div>}
+    </div>)
   }
 
   const staffBodyTemplate = (data) => {
-    return data.staff.map(item => {return <a key={item._id} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target='_blank' style={{textDecoration:'none'}}><div style={{fontSize:'.78rem',margin:'0px',lineHeight:'.77rem'}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{item.lastname ? item.lastname : item.user}<br></br></div></a>})
+    return <div onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{data.staff && data.staff.length > 0 ? data.staff.map(item => {return <a key={item._id} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target='_blank' style={{textDecoration:'none'}}><div style={{fontSize:'.78rem',margin:'0px',lineHeight:'.77rem'}}>{item.lastname ? item.lastname : item.user}<br></br></div></a>}) : <i className="pi pi-minus py-3" style={{lineHeight: 'normal'}} />}</div>
   }
 
   const linkBodyTemplate = (data) => {
@@ -208,23 +206,23 @@ export default function Home () {
           <Column header='Пума' body={pumaBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
           <Column header='Сайт' body={siteBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
         </DataTable>
-        {contextMenu ? (
+        {contextMenu &&
           <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
             <span className='p-float-label'>
-              <InputText id='phonesmail' type='text' className='p-inputtext-sm' value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
-              <label className='label' htmlFor='phonesmail'>{currentPhone}</label>
+              <InputText id='phones' type='text' className='p-inputtext-sm' value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
+              <label className='label' htmlFor='phones'>{currentPhone}</label>
             </span>
-            <i className='pi pi-times ml-3' style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
-            <i className='pi pi-check ml-3 mr-2' style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextMenu(false)}></i>
+            <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextMenu(false)} />
+            <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => setContextMenu(false)} />
           </div>
-        ) : <></>}
-        {contextStaffMenu ? (
+        }
+        {contextStaffMenu &&
           <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
             <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel='label' optionValue='value' optionGroupLabel='label' optionGroupChildren='items' display='chip' filter placeholder='Менеджер' className='w-full md:w-20rem' showClear dataKey='item._id' />
-            <i className='pi pi-times ml-3' style={{ fontSize: '1.2rem',color: 'red', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
-            <i className='pi pi-check ml-3 mr-2' style={{ fontSize: '1.2rem',color: 'green', cursor: 'pointer' }} onClick={() => setContextStaffMenu(false)}></i>
+            <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextStaffMenu(false)} />
+            <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => setContextStaffMenu(false)} />
           </div>
-        ) : <></>}
+        }
       </main>
     </MainLayout>
     </>

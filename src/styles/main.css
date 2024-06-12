@@ -75,3 +75,6 @@
 .p-multiselect .p-multiselect-trigger {
   width: 2rem;
 }
+.p-selectbutton .p-component {
+  padding: 7px 10px;
+}
