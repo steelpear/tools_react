@@ -124,16 +124,16 @@ export default function Home () {
     return (
       <div className='flex align-items-center justify-content-between'>
         <div className='flex align-items-center'>
-          <Image src='letter.svg' alt='portal' width='20' style={{marginLeft:'10px'}}/>
-          <span style={{ margin: '0 10px 0 3px', fontWeight: '400' }}>Автосателлит</span>
-          <Image src='satellite.svg' alt='portal' width='20'/>
-          <span style={{ margin: '0 10px 0 3px', fontWeight: '400' }}>Сателлит</span>
-          <Image src='rocket.svg' alt='portal' width='20' />
-          <span style={{ margin: '0 10px 0 3px', fontWeight: '400' }}>Классический</span>
-          <Image src='aa.svg' alt='portal' width='20' />
-          <span style={{ margin: '0 10px 0 3px', fontWeight: '400' }}>Автономный</span>
-          <Image src='logo.svg' alt='portal' width='20' />
-          <span style={{ margin: '0 0 0 3px', fontWeight: '400' }}>Нет сайта</span>
+          <Image src='letter.svg' alt='portal' width='18' style={{marginLeft:'10px'}}/>
+          <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Автосателлит</span>
+          <Image src='satellite.svg' alt='portal' width='18'/>
+          <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Сателлит</span>
+          <Image src='rocket.svg' alt='portal' width='18' />
+          <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Классический</span>
+          <Image src='aa.svg' alt='portal' width='18' />
+          <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Автономный</span>
+          <Image src='logo.svg' alt='portal' width='18' />
+          <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
           <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{ position: 'top' }}style={{marginInline: 10}} />
         </div>
         <div className='flex'>
@@ -177,12 +177,12 @@ export default function Home () {
   }
 
   const siteBodyTemplate = (data) => {
-    if (data.site_type === 'Сателлит') {return <div style={{textAlign:'center'}}><Image src='satellite.svg' width='20' /></div>}
-    else if (data.site_type === 'Классический') {return <div style={{textAlign:'center'}}><Image src='rocket.svg' width='20' /></div>}
-    else if (data.site_type === 'Автономный') {return <div style={{textAlign:'center'}}><Image src='aa.svg' width='20' /></div>}
-    else if (data.site_type === 'Автосателлит') {return <div style={{textAlign:'center'}}><Image src='letter.svg' width='20' /></div>}
-    else if (data.site_type === 'Нет сайта') {return <div style={{textAlign:'center'}}><Image src='logo.svg' width='20' /></div>}
-    else {return <div style={{textAlign:'center'}}><Image src='nothing.svg' alt='portal' width='20' /></div>}
+    if (data.site_type === 'Сателлит') {return <div style={{textAlign:'center'}}><Image src='satellite.svg' width='18' /></div>}
+    else if (data.site_type === 'Классический') {return <div style={{textAlign:'center'}}><Image src='rocket.svg' width='18' /></div>}
+    else if (data.site_type === 'Автономный') {return <div style={{textAlign:'center'}}><Image src='aa.svg' width='18' /></div>}
+    else if (data.site_type === 'Автосателлит') {return <div style={{textAlign:'center'}}><Image src='letter.svg' width='18' /></div>}
+    else if (data.site_type === 'Нет сайта') {return <div style={{textAlign:'center'}}><Image src='logo.svg' width='18' /></div>}
+    else {return <div style={{textAlign:'center'}}><Image src='nothing.svg' alt='portal' width='18' /></div>}
   }
 
   const pumaBodyTemplate = (data) => {
