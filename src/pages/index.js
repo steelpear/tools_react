@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import useSWR, { useSWRConfig } from 'swr'
+import useSWR from 'swr'
 import useSWRImmutable from 'swr/immutable'
 import Head from 'next/head'
 import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
+import { PhoneNumberInfo } from '../components/PhoneNumberInfo'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
@@ -37,8 +38,6 @@ export default function Home () {
   const [selectedHotels, setSelectedHotels] = useState(null)
   const [selectedUsers, setSelectedUsers] = useState(null)
   const [staffList, setStaffList] = useState(null)
-
-  // const { mutate } = useSWRConfig()
 
   const { data: hotels, error, mutate } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
 
@@ -117,7 +116,7 @@ export default function Home () {
   }
 
   const selectButtonTemplate = (option) => {
-    return <i className={option.icon} style={{lineHeight: 'normal'}}></i>
+    return <i className={option.icon} style={{lineHeight: 'normal'}} />
   }
 
   const header = () => {
@@ -134,16 +133,16 @@ export default function Home () {
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Автономный</span>
           <Image src='logo.svg' alt='portal' width='18' />
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
-          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{ position: 'top' }}style={{marginInline: 10}} />
+          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{ position: 'top' }}style={{marginLeft: 10}} />
+          <PhoneNumberInfo />
         </div>
         <div className='flex'>
           <span className='p-input-icon-left p-input-icon-right'>
             <i className='pi pi-search' />
             <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder='Поиск'/>
-            {globalFilterValue ? <><i className='pi pi-times' onClick={clearFilter} style={{ cursor: 'pointer' }} /></> : <><i className='pi pi-times' style={{ color: 'lightgrey' }} /></>}
+            {globalFilterValue ? <i className='pi pi-times' onClick={clearFilter} style={{ cursor: 'pointer' }} /> : <i className='pi pi-times' style={{ color: 'lightgrey' }} />}
           </span>
         </div>
-        {isMut ? <Loader mutate={true} /> : <></>}
       </div>
     )
   }
@@ -223,6 +222,7 @@ export default function Home () {
             <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => setContextStaffMenu(false)} />
           </div>
         }
+        {isMut && <Loader mutate={true} />}
       </main>
     </MainLayout>
     </>
