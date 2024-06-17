@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import useSWR from 'swr'
+import { useState, useEffect, useRef } from 'react'
+import useSWR, {useSWRConfig} from 'swr'
 import useSWRImmutable from 'swr/immutable'
 import Head from 'next/head'
 import { Loader } from '../components/Loader'
@@ -13,12 +13,15 @@ import { MultiSelect } from 'primereact/multiselect'
 import { SelectButton } from 'primereact/selectbutton'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
+import { Toast } from 'primereact/toast'
 import 'primeicons/primeicons.css'
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
 const punycode = require('punycode/')
 
 export default function Home () {
+  const toast = useRef(null)
+  const { mutate } = useSWRConfig()
   const btnOptions = [
     {icon: 'pi pi-check-circle', value: 'PumaOn'},
     {icon: 'pi pi-power-off', value: 'PumaOff'},
@@ -26,6 +29,7 @@ export default function Home () {
   ]
   const [btnValue, setBtnValue] = useState(btnOptions[0].value)
   const [isMut, setIsMut] = useState(false)
+  const [isPhoneUpdating, setIsPhoneUpdating] = useState(false)
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
@@ -39,7 +43,7 @@ export default function Home () {
   const [selectedUsers, setSelectedUsers] = useState(null)
   const [staffList, setStaffList] = useState(null)
 
-  const { data: hotels, error, mutate } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
+  const { data: hotels, error } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
 
   const { data: posts } = useSWRImmutable('/api/posts', fetcher)
 
@@ -51,7 +55,7 @@ export default function Home () {
     }
     const mut = async (filter) => {
       setIsMut(true)
-      await mutate(fetcher('https://broniryem.ru/api/Tools/hotels', {
+      await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
         method: 'POST',
         headers: { 'Content-type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({ filter })
@@ -107,6 +111,19 @@ export default function Home () {
     setBtnValue(response ? 'PumaOn' : 'PumaOff')
   }
 
+  const handlePhoneState = async () => {
+    setIsPhoneUpdating(true)
+    await fetch('/api/updatehotel', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ id: currentId, data: {[currentPhone]: currentData} })
+    })
+    await mutate('https://broniryem.ru/api/Tools/hotels')
+    toast.current.show({severity:'success', summary: 'Готово', detail:'Изменения сохранены', life: 3000})
+    setIsPhoneUpdating(false)
+    setContextMenu(false)
+  }
+
   const onGlobalFilterChange = (e) => {
     const value = e.target.value
     let _filters = { ...filters }
@@ -115,11 +132,16 @@ export default function Home () {
     setGlobalFilterValue(value)
   }
 
+  const clearFilter = () => {
+    setFilters({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
+    setGlobalFilterValue('')
+  }
+
   const selectButtonTemplate = (option) => {
     return <i className={option.icon} style={{lineHeight: 'normal'}} />
   }
 
-  const header = () => {
+  const headerTemplate = () => {
     return (
       <div className='flex align-items-center justify-content-between'>
         <div className='flex align-items-center'>
@@ -145,11 +167,6 @@ export default function Home () {
         </div>
       </div>
     )
-  }
-
-  const clearFilter = () => {
-    setFilters({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
-    setGlobalFilterValue('')
   }
 
   const nameBodyTemplate = (data) => {
@@ -193,9 +210,9 @@ export default function Home () {
     <Head>
       <title>Все объекты / Инструменты</title>
     </Head>
-    <MainLayout count={hotels ? hotels.length : null} title='Все объекты / Главная'>
+    <MainLayout count={hotels && hotels.length} title='Все объекты / Инструменты'>
       <main>
-        <DataTable value={hotels} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,hotels ? hotels.length : 0]} filters={filters} globalFilterFields={['name','city','phone1','phone2','sat_domain','href','portal_link','staff','sat_template']} header={header} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+        <DataTable value={hotels} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,hotels ? hotels.length : 0]} filters={filters} globalFilterFields={['name','city','phone1','phone2','sat_domain','href','portal_link','staff','sat_template']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
           <Column selectionMode='multiple' headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }}></Column>
           <Column header='Объект' body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }}></Column>
           <Column field='city' header='Регион' sortable headerStyle={{ backgroundColor:'white' }}></Column>
@@ -212,7 +229,7 @@ export default function Home () {
               <label className='label' htmlFor='phones'>{currentPhone}</label>
             </span>
             <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextMenu(false)} />
-            <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => setContextMenu(false)} />
+            <Button icon='pi pi-check' severity='success' text rounded size='large' loading={isPhoneUpdating} onClick={() => handlePhoneState()} />
           </div>
         }
         {contextStaffMenu &&
@@ -223,6 +240,7 @@ export default function Home () {
           </div>
         }
         {isMut && <Loader mutate={true} />}
+        <Toast ref={toast} position="top-center" />
       </main>
     </MainLayout>
     </>

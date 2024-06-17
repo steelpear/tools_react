@@ -4,7 +4,7 @@ import 'primeicons/primeicons.css'
 import { ScrollTop } from 'primereact/scrolltop'
 import { Sidebar } from 'primereact/sidebar'
 import { Button } from 'primereact/button'
-import { Ripple } from 'primereact/ripple'
+import { Badge } from 'primereact/badge'
 import { Toolbar } from 'primereact/toolbar'
 
 export function MainLayout({ children, ...params }) {
@@ -19,7 +19,7 @@ export function MainLayout({ children, ...params }) {
         <p className='hover:text-blue-700 w-full' onClick={() => router.push('/ats')} style={{color: router.route === '/ats' && 'red'}}><i className='pi pi-phone mr-3'></i>Телефония</p>
       </Sidebar>
       <Button icon='pi pi-bars' severity='secondary' rounded text onClick={() => setVisibleSide(true)} />
-      <div style={{fontSize: 20,marginInline: 20}}>{params.title}{router.route === '/' ? <span style={{fontSize: 14,marginInline: 10}}>({params.count})</span> : <></>}</div>
+      <div style={{fontSize: 20,marginInline: 20}}>{params.title}{router.route === '/' && <span style={{fontSize: 14,marginInline: 10}}><Badge value={params.count} /></span>}</div>
     </div>
   )
 
