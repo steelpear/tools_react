@@ -158,12 +158,10 @@ export default function Home () {
           <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{ position: 'top' }}style={{marginLeft: 10}} />
           <PhoneNumberInfo />
         </div>
-        <div className='flex'>
-          <span className='p-input-icon-left p-input-icon-right'>
-            <i className='pi pi-search' />
-            <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder='Поиск'/>
-            {globalFilterValue ? <i className='pi pi-times' onClick={clearFilter} style={{ cursor: 'pointer' }} /> : <i className='pi pi-times' style={{ color: 'lightgrey' }} />}
-          </span>
+        <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
+          <i className='pi pi-search pt-1' />
+          <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder='Поиск'/>
+          {globalFilterValue ? <i className='pi pi-times' onClick={clearFilter} style={{ cursor: 'pointer' }} /> : <i className='pi pi-times pt-1' style={{ color: 'lightgrey' }} />}
         </div>
       </div>
     )
@@ -213,6 +211,7 @@ export default function Home () {
     <MainLayout count={hotels && hotels.length} title='Все объекты / Инструменты'>
       <main>
         <DataTable value={hotels} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,hotels ? hotels.length : 0]} filters={filters} globalFilterFields={['name','city','phone1','phone2','sat_domain','href','portal_link','staff','sat_template']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+          <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-2 text-xs'>{options.rowIndex + 1}</div>}></Column>
           <Column selectionMode='multiple' headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }}></Column>
           <Column header='Объект' body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }}></Column>
           <Column field='city' header='Регион' sortable headerStyle={{ backgroundColor:'white' }}></Column>
