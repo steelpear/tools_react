@@ -30,6 +30,7 @@ export default function Home () {
   const [btnValue, setBtnValue] = useState(btnOptions[0].value)
   const [isMut, setIsMut] = useState(false)
   const [isPhoneUpdating, setIsPhoneUpdating] = useState(false)
+  const [isStuffUpdating, setIsStuffUpdating] = useState(false)
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
@@ -39,13 +40,13 @@ export default function Home () {
   const [currentPhone, setCurrentPhone] = useState(null)
   const [currentStaffData, setCurrentStaffData] = useState(null)
   const [currentId, setCurrentId] = useState(null)
-  const [selectedHotels, setSelectedHotels] = useState(null)
-  const [selectedUsers, setSelectedUsers] = useState(null)
+  const [selectedHotels, setSelectedHotels] = useState([])
+  const [selectedUsers, setSelectedUsers] = useState([])
   const [staffList, setStaffList] = useState(null)
 
   const { data: hotels, error } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
 
-  const { data: posts } = useSWRImmutable('/api/posts', fetcher)
+  const { data: posts } = useSWR('/api/posts', fetcher)
 
   useEffect(() => {
     const checkBtn = () => {
@@ -93,10 +94,11 @@ export default function Home () {
 
   const handleContextMenuStaff = (e,data,id) => {
     e.preventDefault()
-    const stf = data.map(item => {return ({label: item.lastname ? item.lastname : item.user, _id: item._id})})
+    const stf = data.map(item => item._id)
     setPositions({x:e.pageX-200,y:e.pageY})
     getStuffList()
     setCurrentStaffData(stf)
+    setSelectedUsers(stf)
     setCurrentId(id)
     setContextStaffMenu(true)
   }
@@ -119,9 +121,32 @@ export default function Home () {
       body: JSON.stringify({ id: currentId, data: {[currentPhone]: currentData} })
     })
     await mutate('https://broniryem.ru/api/Tools/hotels')
-    toast.current.show({severity:'success', summary: 'Готово', detail:'Изменения сохранены', life: 3000})
+    toast.current.show({severity:'success', summary: 'Готово', detail:'Изменения сохранены', life: 2500})
     setIsPhoneUpdating(false)
     setContextMenu(false)
+  }
+
+  const handleStuffList = async () => {
+    setIsStuffUpdating(true)
+    await fetch('/api/deleteusershotel', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ids: currentStaffData, data: currentId})
+    })
+    const res = await fetch('/api/updateusershotels', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ids: selectedUsers, data: currentId})
+    })
+    const response = await res.json()
+    if (response.modifiedCount !== 0) {
+      await mutate('https://broniryem.ru/api/Tools/hotels')
+      toast.current.show({severity:'success', summary: 'Готово', detail:'Изменения сохранены', life: 2500})
+    } else {
+      toast.current.show({severity:'error', summary: 'Ошибка!', detail:'Что-то пошло не так', life: 2500})
+    }
+    setIsStuffUpdating(false)
+    setContextStaffMenu(false)
   }
 
   const onGlobalFilterChange = (e) => {
@@ -211,15 +236,15 @@ export default function Home () {
     <MainLayout count={hotels && hotels.length} title='Все объекты / Инструменты'>
       <main>
         <DataTable value={hotels} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,hotels ? hotels.length : 0]} filters={filters} globalFilterFields={['name','city','phone1','phone2','sat_domain','href','portal_link','staff','sat_template']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
-          <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-2 text-xs'>{options.rowIndex + 1}</div>}></Column>
-          <Column selectionMode='multiple' headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }}></Column>
-          <Column header='Объект' body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }}></Column>
-          <Column field='city' header='Регион' sortable headerStyle={{ backgroundColor:'white' }}></Column>
-          <Column header='Ссылка' body={linkBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
-          <Column header='Менеджер' body={staffBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
-          <Column header='Шаблон' field='sat_template' sortable headerStyle={{ backgroundColor:'white' }}></Column>
-          <Column header='Пума' body={pumaBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
-          <Column header='Сайт' body={siteBodyTemplate} headerStyle={{ backgroundColor:'white' }}></Column>
+          <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
+          <Column selectionMode='multiple' headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }} />
+          <Column header='Объект' body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }} />
+          <Column field='city' body={data => <div className='ml-1 text-sm'>{data.city}</div>} header='Регион' sortable headerStyle={{ backgroundColor:'white' }} />
+          <Column header='Ссылка' body={linkBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
+          <Column header='Менеджер' body={staffBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
+          <Column header='Шаблон' field='sat_template' body={data => <div className='ml-1 text-sm'>{data.sat_template}</div>} sortable headerStyle={{ backgroundColor:'white' }} />
+          <Column header='Пума' body={pumaBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
+          <Column header='Сайт' body={siteBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
         </DataTable>
         {contextMenu &&
           <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
@@ -235,7 +260,7 @@ export default function Home () {
           <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
             <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel='label' optionValue='value' optionGroupLabel='label' optionGroupChildren='items' display='chip' filter placeholder='Менеджер' className='w-full md:w-20rem' showClear dataKey='item._id' />
             <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextStaffMenu(false)} />
-            <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => setContextStaffMenu(false)} />
+            <Button icon='pi pi-check' severity='success' text rounded size='large' loading={isStuffUpdating} onClick={() => handleStuffList()} />
           </div>
         }
         {isMut && <Loader mutate={true} />}
