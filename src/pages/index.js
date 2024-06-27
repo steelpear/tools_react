@@ -11,9 +11,11 @@ import { InputText } from 'primereact/inputtext'
 import { Button } from 'primereact/button'
 import { MultiSelect } from 'primereact/multiselect'
 import { SelectButton } from 'primereact/selectbutton'
+import { Menu } from 'primereact/menu'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
 import { Toast } from 'primereact/toast'
+import { OverlayPanel } from 'primereact/overlaypanel'
 import 'primeicons/primeicons.css'
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
@@ -21,32 +23,64 @@ const punycode = require('punycode/')
 
 export default function Home () {
   const toast = useRef(null)
+  const opnRegion = useRef(null)
+  const opnTemplate = useRef(null)
+  const filterMenu = useRef(null)
   const { mutate } = useSWRConfig()
   const btnOptions = [
     {icon: 'pi pi-check-circle', value: 'PumaOn'},
     {icon: 'pi pi-power-off', value: 'PumaOff'},
     {icon: 'pi pi-align-justify', value: 'All'}
   ]
+  const itemRegion = (item) => (
+    <div className='p-menuitem-content'>
+      <a className="flex align-items-baseline p-menuitem-link" onClick={(e) => opnRegion.current.toggle(e)}>
+        <span className={item.icon} />
+        <span className="mx-2">{item.label}</span>
+      </a>
+    </div>
+  )
+
+  const itemTemplate = (item) => (
+    <div className='p-menuitem-content'>
+      <a className="flex align-items-baseline p-menuitem-link" onClick={(e) => opnTemplate.current.toggle(e)}>
+        <span className={item.icon} />
+        <span className="mx-2">{item.label}</span>
+      </a>
+    </div>
+  )
+
+  const filterMenuItems = [
+    {label: 'Регион', icon: 'pi pi-globe', template: itemRegion},
+    {label: 'Шаблон', icon: 'pi pi-code', template: itemTemplate}
+  ]
   const [btnValue, setBtnValue] = useState(btnOptions[0].value)
   const [isMut, setIsMut] = useState(false)
+  const [isUpdated, setIsUpdated] = useState('')
   const [isPhoneUpdating, setIsPhoneUpdating] = useState(false)
   const [isStuffUpdating, setIsStuffUpdating] = useState(false)
+  const [isTwoPhones, setIsTwoPhones] = useState(false)
+  const [isAddPhone2, setIsAddPhone2]= useState(false)
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
+  const [contextEmptyMenu, setContextEmptyMenu] = useState(false)
   const [contextStaffMenu, setContextStaffMenu] = useState(false)
   const [positions, setPositions] = useState({x:0,y:0})
   const [currentData, setCurrentdata] = useState(null)
   const [currentPhone, setCurrentPhone] = useState(null)
+  const [currentPhone1, setCurrentPhone1] = useState(null)
+  const [currentPhone2, setCurrentPhone2] = useState(null)
   const [currentStaffData, setCurrentStaffData] = useState(null)
   const [currentId, setCurrentId] = useState(null)
-  const [selectedHotels, setSelectedHotels] = useState([])
-  const [selectedUsers, setSelectedUsers] = useState([])
+  const [selectedHotels, setSelectedHotels] = useState(null)
+  const [selectedUsers, setSelectedUsers] = useState(null)
   const [staffList, setStaffList] = useState(null)
 
   const { data: hotels, error } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
 
-  const { data: posts } = useSWR('/api/posts', fetcher)
+  const { data: posts } = useSWRImmutable('/api/posts', fetcher)
+  const { data: cities } = useSWRImmutable('/api/cities', fetcher)
 
   useEffect(() => {
     const checkBtn = () => {
@@ -83,13 +117,35 @@ export default function Home () {
     setStaffList(out)
   }
 
-  const handleContextMenu = (e,data,id,phone) => {
+  const handleContextMenu = (e,data,id,phone,mode) => {
     e.preventDefault()
     setPositions({x:e.pageX,y:e.pageY})
     setCurrentdata(data)
     setCurrentPhone(phone)
     setCurrentId(id)
+    setIsTwoPhones(mode)
     setContextMenu(true)
+  }
+
+  const handleContextEmptyMenu = (e,id) => {
+    e.preventDefault()
+    setPositions({x:e.pageX,y:e.pageY})
+    setCurrentId(id)
+    setContextMenu(false)
+    setContextStaffMenu(false)
+    setContextEmptyMenu(true)
+  }
+
+  const closeContextEmptyMenu = () => {
+    setCurrentPhone1(null)
+    setCurrentPhone2(null)
+    setIsAddPhone2(false)
+    setContextEmptyMenu(false)
+  }
+
+  const closeContextMenu = () => {
+    setIsAddPhone2(false)
+    setContextMenu(false)
   }
 
   const handleContextMenuStaff = (e,data,id) => {
@@ -113,40 +169,58 @@ export default function Home () {
     setBtnValue(response ? 'PumaOn' : 'PumaOff')
   }
 
-  const handlePhoneState = async () => {
+  const handlePhoneState = async (mode) => {
+    let data = null
+    if (mode == 'empty') {
+      data = {phone1:currentPhone1, phone2:currentPhone2}
+    } else if (mode == 'add') {
+      data = {phone1:currentData, phone2:currentPhone2}
+    } else {
+      data = {[currentPhone]: currentData}
+    }
     setIsPhoneUpdating(true)
     await fetch('/api/updatehotel', {
       method: 'POST',
       headers: { 'Content-type': 'application/json; charset=UTF-8' },
-      body: JSON.stringify({ id: currentId, data: {[currentPhone]: currentData} })
+      body: JSON.stringify({id: currentId, data})
     })
     await mutate('https://broniryem.ru/api/Tools/hotels')
     toast.current.show({severity:'success', summary: 'Готово', detail:'Изменения сохранены', life: 2500})
     setIsPhoneUpdating(false)
-    setContextMenu(false)
+    mode == 'empty' ? closeContextEmptyMenu() : closeContextMenu()
+  }
+
+  const copyToClipboard = (data) => {
+    navigator.clipboard.writeText(data)
+    toast.current.show({severity:'info', detail:'Скопировано в буфер обмена', life: 2000})
   }
 
   const handleStuffList = async () => {
     setIsStuffUpdating(true)
-    await fetch('/api/deleteusershotel', {
+    const resp = await fetch('/api/deleteusershotel', {
       method: 'POST',
       headers: { 'Content-type': 'application/json; charset=UTF-8' },
       body: JSON.stringify({ids: currentStaffData, data: currentId})
     })
-    const res = await fetch('/api/updateusershotels', {
-      method: 'POST',
-      headers: { 'Content-type': 'application/json; charset=UTF-8' },
-      body: JSON.stringify({ids: selectedUsers, data: currentId})
-    })
-    const response = await res.json()
-    if (response.modifiedCount !== 0) {
-      await mutate('https://broniryem.ru/api/Tools/hotels')
-      toast.current.show({severity:'success', summary: 'Готово', detail:'Изменения сохранены', life: 2500})
-    } else {
-      toast.current.show({severity:'error', summary: 'Ошибка!', detail:'Что-то пошло не так', life: 2500})
+    const responze = await resp.json()
+    setIsUpdated(responze.modifiedCount != 0 ? 'Ok' : 'Error')
+    if (selectedUsers !== null) {
+      const res = await fetch('/api/updateusershotels', {
+        method: 'POST',
+        headers: { 'Content-type': 'application/json; charset=UTF-8' },
+        body: JSON.stringify({ids: selectedUsers, data: currentId})
+      })
+      const response = await res.json()
+      setIsUpdated(response.modifiedCount != 0 ? 'Ok' : 'Error')
     }
     setIsStuffUpdating(false)
     setContextStaffMenu(false)
+    await mutate('https://broniryem.ru/api/Tools/hotels')
+    if (isUpdated == 'Ok') {
+      toast.current.show({severity:'success', summary: 'Готово', detail:'Изменения сохранены', life: 2500})
+    } else if (isUpdated === 'Error') {
+      toast.current.show({severity:'error', summary: 'Ошибка!', detail:'Что-то пошло не так', life: 2500})
+    }
   }
 
   const onGlobalFilterChange = (e) => {
@@ -180,7 +254,21 @@ export default function Home () {
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Автономный</span>
           <Image src='logo.svg' alt='portal' width='18' />
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
-          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{ position: 'top' }}style={{marginLeft: 10}} />
+          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginLeft: 10}} />
+          <div className="card flex justify-content-center">
+            <Menu model={filterMenuItems} popup ref={filterMenu} id="filter_menu" />
+            <Button className='ml-2' icon="pi pi-filter" rounded text severity="info" size='large' onClick={(event) => filterMenu.current.toggle(event)} aria-controls="filter_menu" aria-haspopup tooltip="Фильтры" tooltipOptions={{position: 'top'}} />
+            <OverlayPanel ref={opnRegion} showCloseIcon style={{width:300}}>
+              <div className="flex justify-content-center">
+                Region
+              </div>
+            </OverlayPanel>
+            <OverlayPanel ref={opnTemplate} showCloseIcon style={{width:300}}>
+              <div className="flex justify-content-center">
+                Template
+              </div>
+            </OverlayPanel>
+          </div>
           <PhoneNumberInfo />
         </div>
         <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
@@ -195,17 +283,17 @@ export default function Home () {
   const nameBodyTemplate = (data) => {
     return (
     <div>
-      <a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target='_blank' style={{textDecoration:'none'}}><span style={{fontWeight:'500'}}>{data.name}</span></a>
+      <a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target='_blank' style={{textDecoration:'none'}}><span style={{fontWeight:'400', fontSize:'.9rem'}}>{data.name}</span></a>
       {data.phone1 || data.phone2 ?
-      <div style={{fontSize:'12px',margin:'0px',lineHeight:'15px',color:'#444',fontWeight:500}}>
-        {data.phone1 && <div onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id,'phone1')}>{data.phone1}<br></br></div>}
-        {data.phone2 && <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id,'phone2')}>{data.phone2}</div>}
-      </div> : <div onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id,'none')}><i className='pi pi-minus' style={{lineHeight: 'normal'}} /></div>}
+      <div className='phones_wrap'>
+        {data.phone1 && <div className='phones_wrap_item' onClick={() => copyToClipboard(data.phone1)} onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id,'phone1', data.phone1 && data.phone2 ? true : false)}>{data.phone1}</div>}
+        {data.phone2 && <div className='phones_wrap_item' onClick={() => copyToClipboard(data.phone2)} onContextMenu={(e) => handleContextMenu(e,data.phone2,data._id,'phone2', data.phone1 && data.phone2 ? true : false)}>{data.phone2}</div>}
+      </div> : <div onContextMenu={(e) => handleContextEmptyMenu(e,data._id)}><i className='pi pi-minus' style={{lineHeight: 'normal', cursor: 'pointer'}} /></div>}
     </div>)
   }
 
   const staffBodyTemplate = (data) => {
-    return <div onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{data.staff && data.staff.length > 0 ? data.staff.map(item => {return <a key={item._id} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target='_blank' style={{textDecoration:'none'}}><div style={{fontSize:'.78rem',margin:'0px',lineHeight:'.77rem'}}>{item.lastname ? item.lastname : item.user}<br></br></div></a>}) : <i className="pi pi-minus py-3" style={{lineHeight: 'normal'}} />}</div>
+    return <div style={{cursor: 'pointer'}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{data.staff && data.staff.length > 0 ? data.staff.map(item => {return <a key={item._id} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target='_blank' style={{textDecoration:'none'}}><div style={{fontSize:'.78rem',margin:'0px',lineHeight:'.77rem'}}>{item.lastname ? item.lastname : item.user}<br></br></div></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'normal', cursor:'pointer'}} />}</div>
   }
 
   const linkBodyTemplate = (data) => {
@@ -239,28 +327,52 @@ export default function Home () {
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
           <Column selectionMode='multiple' headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }} />
           <Column header='Объект' body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }} />
-          <Column field='city' body={data => <div className='ml-1 text-sm'>{data.city}</div>} header='Регион' sortable headerStyle={{ backgroundColor:'white' }} />
+          <Column field='city' body={data => <div className='ml-1 text-sm' onClick={() => copyToClipboard(data.city)}>{data.city}</div>} header='Регион' sortable headerStyle={{ backgroundColor:'white' }} />
           <Column header='Ссылка' body={linkBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
           <Column header='Менеджер' body={staffBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
-          <Column header='Шаблон' field='sat_template' body={data => <div className='ml-1 text-sm'>{data.sat_template}</div>} sortable headerStyle={{ backgroundColor:'white' }} />
+          <Column header='Шаблон' field='sat_template' body={data => <div className='ml-1 text-sm' onClick={() => copyToClipboard(data.sat_template)}>{data.sat_template}</div>} sortable headerStyle={{ backgroundColor:'white' }} />
           <Column header='Пума' body={pumaBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
           <Column header='Сайт' body={siteBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
         </DataTable>
         {contextMenu &&
-          <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
+          <div className={`context-menu-wrap ${isAddPhone2 && 'block'}`} style={{top:positions.y, left:positions.x}}>
             <span className='p-float-label'>
-              <InputText id='phones' type='text' className='p-inputtext-sm' value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
-              <label className='label' htmlFor='phones'>{currentPhone}</label>
+              <InputText id='phone1' type='text' className='p-inputtext-sm' value={currentData} onChange={(e) => setCurrentdata(e.target.value)} />
+              <label className='label' htmlFor='phone1'>{currentPhone}</label>
             </span>
-            <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextMenu(false)} />
-            <Button icon='pi pi-check' severity='success' text rounded size='large' loading={isPhoneUpdating} onClick={() => handlePhoneState()} />
+            {isAddPhone2 &&
+              <span className='p-float-label mt-1'>
+              <InputText id='phone2' type='text' className='p-inputtext-sm' value={currentPhone2} onChange={(e) => setCurrentPhone2(e.target.value)} />
+              <label className='label' htmlFor='phone2'>phone2</label>
+            </span>}
+            <div className='flex align-items-center justify-content-between'>
+              <Button className={`${!isAddPhone2 && 'ml-1'}`} icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => closeContextMenu()} />
+              {(!isTwoPhones && !isAddPhone2) && <Button className='ml-1' icon='pi pi-plus' severity='secondary' text rounded size='large' onClick={() => setIsAddPhone2(true)} />}
+              <Button icon='pi pi-check' severity='success' text rounded size='large' loading={isPhoneUpdating} onClick={() => handlePhoneState(isAddPhone2 ? 'add' : 'one')} />
+            </div>
+          </div>
+        }
+        {contextEmptyMenu &&
+          <div className='context-menu-wrap block' style={{top:positions.y, left:positions.x}}>
+            <div className='p-float-label'>
+              <InputText id='phone1' type='text' className='p-inputtext-sm' value={currentPhone1} onChange={(e) => setCurrentPhone1(e.target.value)} />
+              <label className='label' htmlFor='phone1'>phone1</label>
+            </div>
+            <div className='p-float-label mt-1'>
+              <InputText id='phone2' type='text' className='p-inputtext-sm' value={currentPhone2} onChange={(e) => setCurrentPhone2(e.target.value)} disabled={!currentPhone1} />
+              <label className='label' htmlFor='phone2'>phone2</label>
+            </div>
+            <div className='flex align-items-center justify-content-between'>
+              <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => closeContextEmptyMenu()} />
+              <Button icon='pi pi-check' severity='success' text rounded size='large' loading={isPhoneUpdating} onClick={() => handlePhoneState('empty')} />
+            </div>
           </div>
         }
         {contextStaffMenu &&
           <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
             <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel='label' optionValue='value' optionGroupLabel='label' optionGroupChildren='items' display='chip' filter placeholder='Менеджер' className='w-full md:w-20rem' showClear dataKey='item._id' />
             <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextStaffMenu(false)} />
-            <Button icon='pi pi-check' severity='success' text rounded size='large' loading={isStuffUpdating} onClick={() => handleStuffList()} />
+            <Button icon='pi pi-check' severity='success' text rounded size='large' disabled={(currentStaffData == null || currentStaffData.length == 0) && (selectedUsers == null || selectedUsers.length == 0) || (selectedUsers == currentStaffData)} loading={isStuffUpdating} onClick={() => handleStuffList()} />
           </div>
         }
         {isMut && <Loader mutate={true} />}
