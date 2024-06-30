@@ -12,6 +12,7 @@ import { Button } from 'primereact/button'
 import { MultiSelect } from 'primereact/multiselect'
 import { SelectButton } from 'primereact/selectbutton'
 import { Menu } from 'primereact/menu'
+import { TreeSelect } from 'primereact/treeselect'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
 import { Toast } from 'primereact/toast'
@@ -32,9 +33,15 @@ export default function Home () {
     {icon: 'pi pi-power-off', value: 'PumaOff'},
     {icon: 'pi pi-align-justify', value: 'All'}
   ]
+
+  const openRegionFilterPanel = (e) => {
+    getCitiesList()
+    opnRegion.current.toggle(e)
+  }
+
   const itemRegion = (item) => (
     <div className='p-menuitem-content'>
-      <a className="flex align-items-baseline p-menuitem-link" onClick={(e) => opnRegion.current.toggle(e)}>
+      <a className="flex align-items-baseline p-menuitem-link" onClick={(e) => openRegionFilterPanel(e)}>
         <span className={item.icon} />
         <span className="mx-2">{item.label}</span>
       </a>
@@ -67,15 +74,17 @@ export default function Home () {
   const [contextEmptyMenu, setContextEmptyMenu] = useState(false)
   const [contextStaffMenu, setContextStaffMenu] = useState(false)
   const [positions, setPositions] = useState({x:0,y:0})
-  const [currentData, setCurrentdata] = useState(null)
-  const [currentPhone, setCurrentPhone] = useState(null)
-  const [currentPhone1, setCurrentPhone1] = useState(null)
-  const [currentPhone2, setCurrentPhone2] = useState(null)
+  const [currentData, setCurrentdata] = useState('')
+  const [currentPhone, setCurrentPhone] = useState('')
+  const [currentPhone1, setCurrentPhone1] = useState('')
+  const [currentPhone2, setCurrentPhone2] = useState('')
   const [currentStaffData, setCurrentStaffData] = useState(null)
   const [currentId, setCurrentId] = useState(null)
   const [selectedHotels, setSelectedHotels] = useState(null)
   const [selectedUsers, setSelectedUsers] = useState(null)
+  const [selectedRegions, setSelectedRegions] = useState(null)
   const [staffList, setStaffList] = useState(null)
+  const [citiesList, setCitiesList] = useState(null)
 
   const { data: hotels, error } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
 
@@ -117,6 +126,22 @@ export default function Home () {
     setStaffList(out)
   }
 
+  const getCitiesList = () => {
+    const parents = cities.filter(item => item.level == 0)
+    const childs = cities.filter(item => item.level == 1)
+    const out = []
+    parents.map((city, index) => {
+      const chlds = childs.filter(child => child.parent == city._id)
+      const chls = chlds.map((item, i) => {return {key: index + '-' + i, label: item.name, data: item}})
+      out.push({key: index, label: city.name, data: city, children: chls})
+    })
+    setCitiesList(out)
+  }
+
+  const filterOfRegion = () => {
+    console.log(selectedRegions)
+  }
+
   const handleContextMenu = (e,data,id,phone,mode) => {
     e.preventDefault()
     setPositions({x:e.pageX,y:e.pageY})
@@ -137,8 +162,8 @@ export default function Home () {
   }
 
   const closeContextEmptyMenu = () => {
-    setCurrentPhone1(null)
-    setCurrentPhone2(null)
+    setCurrentPhone1('')
+    setCurrentPhone2('')
     setIsAddPhone2(false)
     setContextEmptyMenu(false)
   }
@@ -167,6 +192,7 @@ export default function Home () {
     })
     const response = await res.json()
     setBtnValue(response ? 'PumaOn' : 'PumaOff')
+    toast.current.show({severity:'success', summary: 'Готово', detail:'Изменения сохранены', life: 2500})
   }
 
   const handlePhoneState = async (mode) => {
@@ -259,8 +285,11 @@ export default function Home () {
             <Menu model={filterMenuItems} popup ref={filterMenu} id="filter_menu" />
             <Button className='ml-2' icon="pi pi-filter" rounded text severity="info" size='large' onClick={(event) => filterMenu.current.toggle(event)} aria-controls="filter_menu" aria-haspopup tooltip="Фильтры" tooltipOptions={{position: 'top'}} />
             <OverlayPanel ref={opnRegion} showCloseIcon style={{width:300}}>
-              <div className="flex justify-content-center">
-                Region
+              <TreeSelect value={selectedRegions} onChange={(e) => setSelectedRegions(e.value)} options={citiesList} 
+                filter metaKeySelection={false} className="w-full" selectionMode="checkbox" placeholder="Регион" showClear panelStyle={{width: 350}} />
+              <div className='flex align-items-center justify-content-between'>
+                <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={(e) => opnRegion.current.toggle(e)} />
+                <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => filterOfRegion()} />
               </div>
             </OverlayPanel>
             <OverlayPanel ref={opnTemplate} showCloseIcon style={{width:300}}>
@@ -364,7 +393,7 @@ export default function Home () {
             </div>
             <div className='flex align-items-center justify-content-between'>
               <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => closeContextEmptyMenu()} />
-              <Button icon='pi pi-check' severity='success' text rounded size='large' loading={isPhoneUpdating} onClick={() => handlePhoneState('empty')} />
+              <Button icon='pi pi-check' severity='success' text rounded size='large' disabled={!currentPhone1} loading={isPhoneUpdating} onClick={() => handlePhoneState('empty')} />
             </div>
           </div>
         }
