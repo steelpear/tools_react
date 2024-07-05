@@ -26,7 +26,7 @@ export const PhoneNumberInfo = () => {
 
   return (
     <div className="card flex justify-content-center">
-      <Button className='ml-2' icon="pi pi-mobile" rounded text severity="info" size='large' aria-label="Region" onClick={(e) => op.current.toggle(e)} tooltip="Информация о номере" tooltipOptions={{ position: 'top' }} />
+      <Button icon="pi pi-mobile" rounded text severity="info" size='large' aria-label="Region" onClick={(e) => op.current.toggle(e)} tooltip="Информация о номере" tooltipOptions={{ position: 'top' }} />
       <OverlayPanel ref={op} showCloseIcon style={{width:300}}>
         <div className="flex justify-content-center">
           <div>

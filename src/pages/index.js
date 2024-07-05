@@ -4,6 +4,7 @@ import useSWRImmutable from 'swr/immutable'
 import Head from 'next/head'
 import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
+import { FiltersButton } from '../components/FiltersButton'
 import { PhoneNumberInfo } from '../components/PhoneNumberInfo'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
@@ -11,12 +12,9 @@ import { InputText } from 'primereact/inputtext'
 import { Button } from 'primereact/button'
 import { MultiSelect } from 'primereact/multiselect'
 import { SelectButton } from 'primereact/selectbutton'
-import { Menu } from 'primereact/menu'
-import { TreeSelect } from 'primereact/treeselect'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
 import { Toast } from 'primereact/toast'
-import { OverlayPanel } from 'primereact/overlaypanel'
 import 'primeicons/primeicons.css'
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
@@ -24,9 +22,6 @@ const punycode = require('punycode/')
 
 export default function Home () {
   const toast = useRef(null)
-  const opnRegion = useRef(null)
-  const opnTemplate = useRef(null)
-  const filterMenu = useRef(null)
   const { mutate } = useSWRConfig()
   const btnOptions = [
     {icon: 'pi pi-check-circle', value: 'PumaOn'},
@@ -34,33 +29,6 @@ export default function Home () {
     {icon: 'pi pi-align-justify', value: 'All'}
   ]
 
-  const openRegionFilterPanel = (e) => {
-    getCitiesList()
-    opnRegion.current.toggle(e)
-  }
-
-  const itemRegion = (item) => (
-    <div className='p-menuitem-content'>
-      <a className="flex align-items-baseline p-menuitem-link" onClick={(e) => openRegionFilterPanel(e)}>
-        <span className={item.icon} />
-        <span className="mx-2">{item.label}</span>
-      </a>
-    </div>
-  )
-
-  const itemTemplate = (item) => (
-    <div className='p-menuitem-content'>
-      <a className="flex align-items-baseline p-menuitem-link" onClick={(e) => opnTemplate.current.toggle(e)}>
-        <span className={item.icon} />
-        <span className="mx-2">{item.label}</span>
-      </a>
-    </div>
-  )
-
-  const filterMenuItems = [
-    {label: 'Регион', icon: 'pi pi-globe', template: itemRegion},
-    {label: 'Шаблон', icon: 'pi pi-code', template: itemTemplate}
-  ]
   const [btnValue, setBtnValue] = useState(btnOptions[0].value)
   const [isMut, setIsMut] = useState(false)
   const [isUpdated, setIsUpdated] = useState('')
@@ -82,14 +50,10 @@ export default function Home () {
   const [currentId, setCurrentId] = useState(null)
   const [selectedHotels, setSelectedHotels] = useState(null)
   const [selectedUsers, setSelectedUsers] = useState(null)
-  const [selectedRegions, setSelectedRegions] = useState(null)
   const [staffList, setStaffList] = useState(null)
-  const [citiesList, setCitiesList] = useState(null)
 
   const { data: hotels, error } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
-
   const { data: posts } = useSWRImmutable('/api/posts', fetcher)
-  const { data: cities } = useSWRImmutable('/api/cities', fetcher)
 
   useEffect(() => {
     const checkBtn = () => {
@@ -124,22 +88,6 @@ export default function Home () {
       )
     })
     setStaffList(out)
-  }
-
-  const getCitiesList = () => {
-    const parents = cities.filter(item => item.level == 0)
-    const childs = cities.filter(item => item.level == 1)
-    const out = []
-    parents.map((city, index) => {
-      const chlds = childs.filter(child => child.parent == city._id)
-      const chls = chlds.map((item, i) => {return {key: index + '-' + i, label: item.name, data: item}})
-      out.push({key: index, label: city.name, data: city, children: chls})
-    })
-    setCitiesList(out)
-  }
-
-  const filterOfRegion = () => {
-    console.log(selectedRegions)
   }
 
   const handleContextMenu = (e,data,id,phone,mode) => {
@@ -281,23 +229,7 @@ export default function Home () {
           <Image src='logo.svg' alt='portal' width='18' />
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
           <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginLeft: 10}} />
-          <div className="card flex justify-content-center">
-            <Menu model={filterMenuItems} popup ref={filterMenu} id="filter_menu" />
-            <Button className='ml-2' icon="pi pi-filter" rounded text severity="info" size='large' onClick={(event) => filterMenu.current.toggle(event)} aria-controls="filter_menu" aria-haspopup tooltip="Фильтры" tooltipOptions={{position: 'top'}} />
-            <OverlayPanel ref={opnRegion} showCloseIcon style={{width:300}}>
-              <TreeSelect value={selectedRegions} onChange={(e) => setSelectedRegions(e.value)} options={citiesList} 
-                filter metaKeySelection={false} className="w-full" selectionMode="checkbox" placeholder="Регион" showClear panelStyle={{width: 350}} />
-              <div className='flex align-items-center justify-content-between'>
-                <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={(e) => opnRegion.current.toggle(e)} />
-                <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => filterOfRegion()} />
-              </div>
-            </OverlayPanel>
-            <OverlayPanel ref={opnTemplate} showCloseIcon style={{width:300}}>
-              <div className="flex justify-content-center">
-                Template
-              </div>
-            </OverlayPanel>
-          </div>
+          <FiltersButton />
           <PhoneNumberInfo />
         </div>
         <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
