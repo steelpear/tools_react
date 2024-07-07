@@ -3,22 +3,25 @@ import {useSWRConfig} from 'swr'
 import useSWRImmutable from 'swr/immutable'
 import { Menu } from 'primereact/menu'
 import { OverlayPanel } from 'primereact/overlaypanel'
+import { MultiSelect } from 'primereact/multiselect'
 import { TreeSelect } from 'primereact/treeselect'
 import { Button } from 'primereact/button'
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
-export const FiltersButton = () => {
+export const FiltersButton = ({...params}) => {
   const opnRegion = useRef(null)
   const opnTemplate = useRef(null)
   const opnType = useRef(null)
   const filterMenu = useRef(null)
   const [citiesList, setCitiesList] = useState(null)
   const [selectedRegions, setSelectedRegions] = useState(null)
+  const [selectedTypes, setSelectedTypes] = useState(null)
 
   const { mutate } = useSWRConfig()
 
   const { data: cities } = useSWRImmutable('/api/cities', fetcher)
+  const { data: types } = useSWRImmutable('/api/types', fetcher)
 
   const getCitiesList = () => {
     const parents = cities.filter(item => item.level == 0)
@@ -36,9 +39,31 @@ export const FiltersButton = () => {
     console.log(selectedRegions)
   }
 
+  const filterOfTypes = async (e) => {
+    const filter = {type: {$in : selectedTypes.map(item => item._id)}}
+    if (params.mode === 'PumaOn') { filter.puma = true }
+    else if (params.mode === 'PumaOff') { filter.puma = false }
+    await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ filter })
+    }), {revalidate: false})
+    closeTypeFilterPanel(e)
+  }
+
   const openRegionFilterPanel = (e) => {
     getCitiesList()
     opnRegion.current.toggle(e)
+  }
+
+  const closeRegionFilterPanel = (e) => {
+    opnRegion.current.toggle(e)
+    setSelectedRegions('')
+  }
+
+  const closeTypeFilterPanel = (e) => {
+    opnType.current.toggle(e)
+    setSelectedTypes('')
   }
 
   const itemRegion = (item) => (
@@ -80,9 +105,9 @@ export const FiltersButton = () => {
       <Button className='ml-2' icon="pi pi-filter" rounded text severity="info" size='large' onClick={(event) => filterMenu.current.toggle(event)} aria-controls="filter_menu" aria-haspopup tooltip="Фильтры" tooltipOptions={{position: 'top'}} />
       <OverlayPanel ref={opnRegion} showCloseIcon style={{width:300}}>
         <TreeSelect value={selectedRegions} onChange={(e) => setSelectedRegions(e.value)} options={citiesList} 
-        filter metaKeySelection={false} className="w-full" selectionMode="checkbox" placeholder="Регион" showClear panelStyle={{width: 350}} />
+        filter metaKeySelection={false} className="w-full" selectionMode="checkbox" placeholder="Регион" panelStyle={{width: 350}} />
         <div className='flex align-items-center justify-content-between mt-2'>
-          <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={(e) => opnRegion.current.toggle(e)} />
+          <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={(e) => closeRegionFilterPanel(e)} />
           <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => filterOfRegion()} />
         </div>
       </OverlayPanel>
@@ -92,8 +117,10 @@ export const FiltersButton = () => {
         </div>
       </OverlayPanel>
       <OverlayPanel ref={opnType} showCloseIcon style={{width:300}}>
-        <div className="flex justify-content-center">
-          Type
+        <MultiSelect value={selectedTypes} onChange={(e) => setSelectedTypes(e.value)} options={types} optionLabel="name" filter placeholder="Тип объекта" className="w-full" />
+        <div className='flex align-items-center justify-content-between mt-2'>
+          <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={(e) => closeTypeFilterPanel(e)} />
+          <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={(e) => filterOfTypes(e)} />
         </div>
       </OverlayPanel>
     </div>
