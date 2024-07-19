@@ -36,7 +36,10 @@ export default function Home () {
   const [isStuffUpdating, setIsStuffUpdating] = useState(false)
   const [isTwoPhones, setIsTwoPhones] = useState(false)
   const [isAddPhone2, setIsAddPhone2]= useState(false)
-  const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
+  const [filters, setFilters] = useState({
+    global: {value: null, matchMode: FilterMatchMode.CONTAINS},
+    'staff.lastname': {value: null, matchMode: FilterMatchMode.CONTAINS}
+  })
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
   const [contextEmptyMenu, setContextEmptyMenu] = useState(false)
@@ -210,6 +213,10 @@ export default function Home () {
     setGlobalFilterValue('')
   }
 
+  const resetFilters = async () => {
+    await mutate('https://broniryem.ru/api/Tools/hotels')
+  }
+
   const selectButtonTemplate = (option) => {
     return <i className={option.icon} style={{lineHeight: 'normal'}} />
   }
@@ -230,6 +237,7 @@ export default function Home () {
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
           <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginLeft: 10}} />
           <FiltersButton mode={btnValue} />
+          <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <PhoneNumberInfo />
         </div>
         <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
@@ -245,6 +253,7 @@ export default function Home () {
     return (
     <div>
       <a href={`https://broniryem.ru/admin/collections/entry/5a5dc18e670fd819bca20da7/${data._id}`} target='_blank' style={{textDecoration:'none'}}><span style={{fontWeight:'400', fontSize:'.9rem'}}>{data.name}</span></a>
+      <div className='text-xs -mt-1 font-italic'>{data.type}</div>
       {data.phone1 || data.phone2 ?
       <div className='phones_wrap'>
         {data.phone1 && <div className='phones_wrap_item' onClick={() => copyToClipboard(data.phone1)} onContextMenu={(e) => handleContextMenu(e,data.phone1,data._id,'phone1', data.phone1 && data.phone2 ? true : false)}>{data.phone1}</div>}
@@ -288,7 +297,6 @@ export default function Home () {
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
           <Column selectionMode='multiple' headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }} />
           <Column header='Объект' field='name' body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }} />
-          <Column header='Тип' field='type' body={data => <div style={{fontWeight:'400', fontSize:'.9rem'}}>{data.type}</div>} sortable headerStyle={{ backgroundColor:'white' }} />
           <Column field='city' body={data => <div className='ml-1 text-sm' onClick={() => copyToClipboard(data.city)}>{data.city}</div>} header='Регион' sortable headerStyle={{ backgroundColor:'white' }} />
           <Column header='Ссылка' body={linkBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
           <Column header='Менеджер' body={staffBodyTemplate} headerStyle={{ backgroundColor:'white' }} />

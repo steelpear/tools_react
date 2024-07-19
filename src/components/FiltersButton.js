@@ -40,7 +40,7 @@ export const FiltersButton = ({...params}) => {
   }
 
   const filterOfTypes = async (e) => {
-    const filter = {type: {$in : selectedTypes.map(item => item._id)}}
+    const filter = {type: {$in : await selectedTypes.map(item => item._id)}}
     if (params.mode === 'PumaOn') { filter.puma = true }
     else if (params.mode === 'PumaOff') { filter.puma = false }
     await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
