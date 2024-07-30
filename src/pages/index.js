@@ -269,7 +269,7 @@ export default function Home () {
   const linkBodyTemplate = (data) => {
     if (data.site_type === 'Сателлит' || data.site_type === 'Автосателлит') {return data.sat_domain ? <a href={`http://${data.sat_domain}`} target='_blank' style={{textDecoration:'none'}}>{punycode.toUnicode(data.sat_domain)}</a> : <></>}
     else if (data.site_type === 'Классический' || data.site_type === 'Автономный') {return data.href ? <a href={`http://${data.href}`} target='_blank' style={{textDecoration:'none'}}>{punycode.toUnicode(data.href)}</a> : <></>}
-    else if (data.site_type === 'Нет сайта') {return data.portal_link ? <a href={`http://${data.portal_link.replace(/^https?:\/\//,'')}`} target='_blank' style={{textDecoration:'none'}}>{data.portal_link.replace(/^https?:\/\//,'')}</a> : <a href={`https://broniryem.ru/search?q=${data.name}`} target='_blank' style={{textDecoration:'none'}}>{`broniryem.ru/search?q=${data.name}`}</a>}
+    else if (data.site_type === 'Нет сайта') {return data.portal_link ? <a href={`http://${data.portal_link.replace(/^https?:\/\//,'')}`} target='_blank' style={{textDecoration:'none'}}>{data.portal_link.replace(/^https?:\/\//,'')}</a> : <a href={`https://broniryem.ru/hotel/${data.city_slug}/${data.name_slug}`} target='_blank' style={{textDecoration:'none'}}>{`broniryem.ru/hotel/${data.city_slug}/${data.name_slug}`}</a>}
     else { return <></> }
   }
 
