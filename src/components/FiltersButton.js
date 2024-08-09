@@ -17,6 +17,8 @@ export const FiltersButton = ({...params}) => {
   const [citiesList, setCitiesList] = useState(null)
   const [selectedRegions, setSelectedRegions] = useState(null)
   const [selectedTypes, setSelectedTypes] = useState(null)
+  const [selectedTemplates, setSelectedTemplates] = useState(null)
+  const templates = Object.values(params.templates).filter(template => template !=='' && template !==null)
 
   const { mutate } = useSWRConfig()
 
@@ -29,14 +31,32 @@ export const FiltersButton = ({...params}) => {
     const out = []
     parents.map((city, index) => {
       const chlds = childs.filter(child => child.parent == city._id)
-      const chls = chlds.map((item, i) => {return {key: index + '-' + i, label: item.name, data: item}})
-      out.push({key: index, label: city.name, data: city, children: chls})
+      const chls = chlds.map((item, i) => {return {key: index + '-' + i, label: item.name, data: item._id}})
+      out.push({key: index, label: city.name, data: city._id, children: chls})
     })
     setCitiesList(out)
   }
 
-  const filterOfRegion = () => {
-    console.log(selectedRegions)
+  const filterOfRegion = async (e) => {
+    const citiesIds = []
+    for (let key in selectedRegions) {
+      if (selectedRegions.hasOwnProperty(key)) {
+        citiesList.forEach(item => {
+          item.children.forEach(item => {
+            if (item.key == key) citiesIds.push(item.data)
+          })
+        })
+      }
+    }
+    const filter = {city: {$in : citiesIds}}
+    if (params.mode === 'PumaOn') { filter.puma = true }
+    else if (params.mode === 'PumaOff') { filter.puma = false }
+    await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ filter })
+    }), {revalidate: false})
+    closeRegionFilterPanel(e)
   }
 
   const filterOfTypes = async (e) => {
@@ -49,6 +69,18 @@ export const FiltersButton = ({...params}) => {
       body: JSON.stringify({ filter })
     }), {revalidate: false})
     closeTypeFilterPanel(e)
+  }
+
+  const filterOfTemplate = async (e) => {
+    const filter = {sat_template: {$in:selectedTemplates}}
+    if (params.mode === 'PumaOn') { filter.puma = true }
+    else if (params.mode === 'PumaOff') { filter.puma = false }
+    await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ filter })
+    }), {revalidate: false})
+    closeTemplateFilterPanel(e)
   }
 
   const openRegionFilterPanel = (e) => {
@@ -64,6 +96,11 @@ export const FiltersButton = ({...params}) => {
   const closeTypeFilterPanel = (e) => {
     opnType.current.toggle(e)
     setSelectedTypes('')
+  }
+
+  const closeTemplateFilterPanel = (e) => {
+    opnTemplate.current.toggle(e)
+    setSelectedTemplates(null)
   }
 
   const itemRegion = (item) => (
@@ -105,15 +142,17 @@ export const FiltersButton = ({...params}) => {
       <Button className='ml-2' icon="pi pi-filter" rounded text severity="info" size='large' onClick={(event) => filterMenu.current.toggle(event)} aria-controls="filter_menu" aria-haspopup tooltip="Фильтры" tooltipOptions={{position: 'top'}} />
       <OverlayPanel ref={opnRegion} showCloseIcon style={{width:300}}>
         <TreeSelect value={selectedRegions} onChange={(e) => setSelectedRegions(e.value)} options={citiesList} 
-        filter metaKeySelection={false} className="w-full" selectionMode="checkbox" placeholder="Регион" panelStyle={{width: 350}} />
+        filter metaKeySelection={false} className="w-full" selectionMode="checkbox" placeholder="Регион" resetFilterOnHide panelStyle={{width: 350}} />
         <div className='flex align-items-center justify-content-between mt-2'>
           <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={(e) => closeRegionFilterPanel(e)} />
-          <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => filterOfRegion()} />
+          <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={(e) => filterOfRegion(e)} />
         </div>
       </OverlayPanel>
       <OverlayPanel ref={opnTemplate} showCloseIcon style={{width:300}}>
-        <div className="flex justify-content-center">
-          Template
+        <MultiSelect value={selectedTemplates} onChange={(e) => setSelectedTemplates(e.value)} options={templates}  filter placeholder="Шаблон сателлита" className="w-full" />
+        <div className='flex align-items-center justify-content-between mt-2'>
+          <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={(e) => closeTemplateFilterPanel(e)} />
+          <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={(e) => filterOfTemplate(e)} />
         </div>
       </OverlayPanel>
       <OverlayPanel ref={opnType} showCloseIcon style={{width:300}}>

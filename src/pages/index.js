@@ -214,7 +214,8 @@ export default function Home () {
   }
 
   const resetFilters = async () => {
-    await mutate('https://broniryem.ru/api/Tools/hotels')
+    if (btnValue === 'PumaOn') await mutate('https://broniryem.ru/api/Tools/hotels')
+    else setBtnValue('PumaOn')
   }
 
   const selectButtonTemplate = (option) => {
@@ -236,7 +237,7 @@ export default function Home () {
           <Image src='logo.svg' alt='portal' width='18' />
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
           <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginLeft: 10}} />
-          <FiltersButton mode={btnValue} />
+          <FiltersButton mode={btnValue} templates={hotels['templates']} />
           <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <PhoneNumberInfo />
         </div>
@@ -291,9 +292,9 @@ export default function Home () {
     <Head>
       <title>Все объекты / Инструменты</title>
     </Head>
-    <MainLayout count={hotels && hotels.length} title='Все объекты / Инструменты'>
+    <MainLayout count={hotels && hotels['hotels'].length} title='Все объекты / Инструменты'>
       <main>
-        <DataTable value={hotels} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,hotels ? hotels.length : 0]} filters={filters} globalFilterFields={['name','city','phone1','phone2','sat_domain','href','portal_link','staff','sat_template']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+        <DataTable value={hotels['hotels']} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,hotels ? hotels['hotels'].length : 0]} filters={filters} globalFilterFields={['name','city','phone1','phone2','sat_domain','href','portal_link','staff','sat_template']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
           <Column selectionMode='multiple' headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }} />
           <Column header='Объект' field='name' body={nameBodyTemplate} sortable headerStyle={{ backgroundColor:'white' }} />
