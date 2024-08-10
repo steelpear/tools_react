@@ -218,6 +218,18 @@ export default function Home () {
     else setBtnValue('PumaOn')
   }
 
+  const exportIds = () => {
+    const ids = JSON.stringify(selectedHotels.map(item => item._id))
+    const date = new Date()
+    const name = 'export-hotels-list_' + ('0' + date.getDate()).slice(-2) + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear() + '_' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '.json'
+    const blob = new Blob([ids], { type: "text/plain" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.download = name
+    link.href = url
+    link.click()
+  }
+
   const selectButtonTemplate = (option) => {
     return <i className={option.icon} style={{lineHeight: 'normal'}} />
   }
@@ -239,6 +251,7 @@ export default function Home () {
           <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginLeft: 10}} />
           <FiltersButton mode={btnValue} templates={hotels['templates']} />
           <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
+          <Button icon="pi pi-file-export" disabled={selectedHotels.length < 1} rounded text severity="info" size='large' onClick={() => exportIds()} aria-controls="filter_menu" aria-haspopup tooltip="Экспорт в файл" tooltipOptions={{position: 'top'}} />
           <PhoneNumberInfo />
         </div>
         <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
