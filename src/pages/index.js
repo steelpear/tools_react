@@ -15,7 +15,6 @@ import { SelectButton } from 'primereact/selectbutton'
 import { FilterMatchMode } from 'primereact/api'
 import { Image } from 'primereact/image'
 import { Toast } from 'primereact/toast'
-import { FileUpload } from 'primereact/fileupload'
 import 'primeicons/primeicons.css'
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
@@ -23,6 +22,7 @@ const punycode = require('punycode/')
 
 export default function Home () {
   const toast = useRef(null)
+  const inputFile = useRef(null)
   const { mutate } = useSWRConfig()
   const btnOptions = [
     {icon: 'pi pi-check-circle', value: 'PumaOn'},
@@ -233,26 +233,27 @@ export default function Home () {
     link.click()
   }
 
-  const importIds =  async (event) => {
-    const file = event.files[0]
-    const reader = new FileReader()
-    reader.readAsText(file)
-    reader.onload = () => setImportedFile(JSON.parse(reader.result))
-    const filter = {_id: {$in:importedFile}}
-    if (btnValue === 'PumaOn') { filter.puma = true }
-    else if (btnValue === 'PumaOff') { filter.puma = false }
-    await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
-      method: 'POST',
-      headers: { 'Content-type': 'application/json; charset=UTF-8' },
-      body: JSON.stringify({ filter })
-    }), {revalidate: false})
+  const importIds = e => {
+    const { files } = e.target
+    if (files && files.length) {
+      const reader = new FileReader()
+      reader.readAsText(files[0])
+      reader.onload = async () => {
+        const filter = {_id: {$in:JSON.parse(reader.result)}}
+        if (btnValue === 'PumaOn') { filter.puma = true }
+        else if (btnValue === 'PumaOff') { filter.puma = false }
+        await mutate('https://broniryem.ru/api/Tools/hotels', fetcher('https://broniryem.ru/api/Tools/hotels', {
+          method: 'POST',
+          headers: { 'Content-type': 'application/json; charset=UTF-8' },
+          body: JSON.stringify({ filter })
+        }), {revalidate: false})
+      }
+    }
   }
 
   const selectButtonTemplate = (option) => {
     return <i className={option.icon} style={{lineHeight: 'normal'}} />
   }
-
-  const chooseOptions = { icon: 'pi pi-file-import', iconOnly: true, className: 'custom-choose-btn p-button-rounded p-button-text' }
 
   const headerTemplate = () => {
     return (
@@ -268,9 +269,9 @@ export default function Home () {
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Автономный</span>
           <Image src='logo.svg' alt='portal' width='18' />
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
-          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginLeft: 10}} />
-          <FileUpload mode="basic" name="demo[]" url="/api/upload" customUpload chooseOptions={chooseOptions} auto uploadHandler={importIds} />
-          {/* <Button icon="pi pi-file-import" rounded text severity="info" size='large' onClick={() => inputFile.current.click()} aria-controls="filter_menu" aria-haspopup tooltip="Импорт" tooltipOptions={{position: 'top'}} /> */}
+          <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginInline: 10}} />
+          <Button icon="pi pi-file-import" rounded text severity="info" size='large' onClick={() => inputFile.current.click()} aria-controls="filter_menu" aria-haspopup tooltip="Импорт" tooltipOptions={{position: 'top'}} />
+          <input style={{display:"none"}} ref={inputFile} onChange={importIds} type="file" />
           <FiltersButton mode={btnValue} templates={hotels['templates']} />
           <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <Button icon="pi pi-file-export" disabled={selectedHotels.length < 1} rounded text severity="info" size='large' onClick={() => exportIds()} aria-controls="filter_menu" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
