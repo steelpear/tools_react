@@ -29,7 +29,6 @@ export default function Home () {
     {icon: 'pi pi-power-off', value: 'PumaOff'},
     {icon: 'pi pi-align-justify', value: 'All'}
   ]
-
   const [btnValue, setBtnValue] = useState(btnOptions[0].value)
   const [isMut, setIsMut] = useState(false)
   const [isUpdated, setIsUpdated] = useState('')
@@ -55,10 +54,10 @@ export default function Home () {
   const [selectedHotels, setSelectedHotels] = useState([])
   const [selectedUsers, setSelectedUsers] = useState(null)
   const [staffList, setStaffList] = useState(null)
-  const [importedFile, setImportedFile] = useState(null)
 
   const { data: hotels, error } = useSWR('https://broniryem.ru/api/Tools/hotels', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
   const { data: posts } = useSWRImmutable('/api/posts', fetcher)
+  const { data: users } = useSWRImmutable('/api/users', fetcher)
 
   useEffect(() => {
     const checkBtn = () => {
@@ -84,14 +83,33 @@ export default function Home () {
 
   const getStuffList = () => {
     const out = []
+    const postsStaff = []
     posts.forEach(post => {
       out.push(
         {
           label: `Пост ${post.post_num}`,
-          items: post.staff_id.map((item,index) => { return { label: post.staff_name[index], value: post.staff_id[index] } }).sort((a, b) => a.label > b.label ? 1 : -1)
+          items: post.staff.map(item => {return {
+            label: users.map(user => {if (user._id == item) {return user.lastname ? user.lastname : user.user}}),
+            value: item
+          }}).sort((a, b) => a.label > b.label ? -1 : 1)
         }
       )
+      postsStaff.push(post.staff)
     })
+    let outPosts = []
+    outPosts = outPosts.concat.apply(outPosts, postsStaff)
+    const notPosts = {
+      label: 'Вне постов',
+      items: users.map(user => {
+        if (!outPosts.includes(user._id)) {
+          return {
+            label: user.lastname ? <div>{user.lastname} (<span className='text-xs'>{user.user}</span>)</div> : user.user,
+            value: user._id
+          }
+        }
+      }).sort((a, b) => a.label > b.label ? -1 : 1).filter(item => item !== undefined)
+    }
+    out.push(notPosts)
     setStaffList(out)
   }
 
@@ -130,10 +148,10 @@ export default function Home () {
     e.preventDefault()
     const stf = data.map(item => item._id)
     setPositions({x:e.pageX-200,y:e.pageY})
-    getStuffList()
     setCurrentStaffData(stf)
     setSelectedUsers(stf)
     setCurrentId(id)
+    getStuffList()
     setContextStaffMenu(true)
   }
 
@@ -216,7 +234,6 @@ export default function Home () {
   }
 
   const resetFilters = async () => {
-    setImportedFile([])
     if (btnValue === 'PumaOn') await mutate('https://broniryem.ru/api/Tools/hotels')
     else setBtnValue('PumaOn')
   }
@@ -271,7 +288,7 @@ export default function Home () {
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
           <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginInline: 10}} />
           <Button icon="pi pi-file-import" rounded text severity="info" size='large' onClick={() => inputFile.current.click()} aria-controls="filter_menu" aria-haspopup tooltip="Импорт" tooltipOptions={{position: 'top'}} />
-          <input style={{display:"none"}} ref={inputFile} onChange={importIds} type="file" />
+          <input style={{display:"none"}} ref={inputFile} onChange={importIds} type="file" accept=".json" />
           <FiltersButton mode={btnValue} templates={hotels['templates']} />
           <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <Button icon="pi pi-file-export" disabled={selectedHotels.length < 1} rounded text severity="info" size='large' onClick={() => exportIds()} aria-controls="filter_menu" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
