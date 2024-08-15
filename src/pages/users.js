@@ -7,6 +7,7 @@ import { MainLayout } from '../components/MainLayout'
 import { Fieldset } from 'primereact/fieldset'
 import { Chip } from 'primereact/chip'
 import { Button } from 'primereact/button'
+import { InputText } from 'primereact/inputtext'
 import { MultiSelect } from 'primereact/multiselect'
 import { Tooltip } from 'primereact/tooltip'
 
@@ -21,8 +22,10 @@ export default function Users () {
   const [selectedUsers, setSelectedUsers] = useState(null)
   const [usersList, setUsersList] = useState(null)
   const [contextStaffMenu, setContextStaffMenu] = useState(false)
+  const [contextPostNumMenu, setContextPostNumMenu] = useState(false)
   const [currentPostId, setCurrentPostId] = useState(null)
   const [positions, setPositions] = useState({x:0,y:0})
+  const [postNum, setPostNum] = useState('')
 
   useEffect(() => {
     EventBus.$on('addpost', () => addPost())
@@ -58,8 +61,25 @@ export default function Users () {
     setUsersList(usrlst)
   }
 
-  const addUserMenu = (e, id) => {
+  const editPostNumContextMenu = (e, id) => {
     e.preventDefault()
+    setPositions({x:e.pageX+90,y:e.pageY-34})
+    setCurrentPostId(id)
+    setContextPostNumMenu(true)
+  }
+
+  const editPostNum = async () => {
+    setContextPostNumMenu(false)
+    await fetch('/api/editpostnum', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ id: currentPostId, data:  postNum })
+    })
+    setPostNum('')
+    mutate('/api/posts')
+  }
+
+  const addUserMenu = (e, id) => {
     getUsersList()
     setPositions({x:e.pageX-250,y:e.pageY-40})
     setCurrentPostId(id)
@@ -98,7 +118,7 @@ export default function Users () {
               return (
                 <div className="card mb-2" key={post._id}>
                   <Tooltip target=".custom-target-chip" />
-                  <Fieldset legend={`Пост ${post.post_num}`} toggleable>
+                  <Fieldset legend={`Пост ${post.post_num}`} toggleable onContextMenu={(e) => editPostNumContextMenu(e,post._id)}>
                     <div className="grid">
                       <div className="col-11 flex align-items-center">
                         {post.staff.map(item => {return users && users.map(user => {if (user._id == item) {return <Chip key={user._id} label={user.lastname ? user.lastname : user.user} removable className='custom-target-chip mx-1 cursor-pointer' onRemove={() => deleteUser(post._id, user._id)} data-pr-tooltip={user.user} data-pr-position="top" />}})
@@ -119,6 +139,13 @@ export default function Users () {
             <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={usersList} optionLabel='name' optionValue='id' display='chip' filter placeholder='Менеджер' className='w-full md:w-12rem' showClear dataKey='item._id' />
             <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextStaffMenu(false)} />
             <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => addUser()} />
+          </div>
+        }
+        {contextPostNumMenu &&
+          <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
+            <InputText value={postNum} onChange={(e) => setPostNum(e.target.value)} keyfilter="int" placeholder="Номер поста" />
+            <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextPostNumMenu(false)} />
+            <Button icon='pi pi-check' severity='success' text rounded size='large' onClick={() => editPostNum()} />
           </div>
         }
         </main>
