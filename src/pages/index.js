@@ -343,9 +343,9 @@ export default function Home () {
   return (
     <>
     <Head>
-      <title>Все объекты / Инструменты</title>
+      <title>Объекты / Инструменты</title>
     </Head>
-    <MainLayout count={hotels && hotels['hotels'].length} title='Все объекты / Инструменты'>
+    <MainLayout count={hotels && hotels['hotels'].length} title='Объекты / Инструменты'>
       <main>
         <DataTable value={hotels['hotels']} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedHotels} onSelectionChange={(e) => setSelectedHotels(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,hotels ? hotels['hotels'].length : 0]} filters={filters} globalFilterFields={['name','city','phone1','phone2','sat_domain','href','portal_link','staff','sat_template']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />

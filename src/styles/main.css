@@ -90,3 +90,9 @@
 .phones_wrap_item:hover {
   color: darkblue;
 }
+.p-fieldset .p-fieldset-content {
+  padding: 0.5rem;
+}
+.p-fieldset.p-fieldset-toggleable .p-fieldset-legend a {
+  padding: 0.8rem 1.25rem;
+}
