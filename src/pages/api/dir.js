@@ -8,6 +8,15 @@ const handler = async (req, res) => {
     })
     const response = await resp.json()
 
+    const prov = await fetch('http://pbx.profpub.ru/api/providers/list', {
+      method: 'POST',
+      headers: {
+        Cookie: 'ssid=s%3A-0UhK5iqdBfwDzRI9xsXXpuGGnpx30Q4.ggwVpv9GtimadFAoeQnSxn9m%2FcW6viR4ydzyOwz1GTI'
+      },
+      body: JSON.stringify({ skip: 0, limit: 100, sort: {} })
+    })
+    const providers = await prov.json()
+
     const directions = await response.map(item => {
       return (
         {
@@ -34,7 +43,7 @@ const handler = async (req, res) => {
                 code: item.code,
                 _id: item.trunk && item.trunk._id,
                 did: item.trunk && item.trunk.did,
-                provider: item.trunk && item.trunk.provider,
+                provider: item.trunk && providers.filter(el => el._id == item.trunk.provider).map(el => el.name).join(''),
                 region: item.trunk && item.trunk.region,
                 lastcall: item.trunk && item.trunk.lastCall
               }

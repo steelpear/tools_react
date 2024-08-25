@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import useSWR, {useSWRConfig} from 'swr'
 import Head from 'next/head'
 import { MainLayout } from '../components/MainLayout'
@@ -7,12 +7,14 @@ import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
 import { Tooltip } from 'primereact/tooltip'
+import { Toast } from 'primereact/toast'
 import { Button } from 'primereact/button'
 import { FilterMatchMode } from 'primereact/api'
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
 export default function Ats () {
+  const copyToast = useRef(null)
   const { mutate } = useSWRConfig()
   const [selectedDirections, setSelectedDirections] = useState(null)
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
@@ -33,6 +35,12 @@ export default function Ats () {
     setGlobalFilterValue('')
   }
 
+  const copyToClipboard = (e, did) => {
+    e.preventDefault()
+    navigator.clipboard.writeText(did)
+    copyToast.current.show({severity:'info', detail:'Скопировано в буфер обмена', life: 2000})
+  }
+
   const headerTemplate = () => {
     return (
       <div className='flex align-items-center justify-content-between'>
@@ -50,7 +58,7 @@ export default function Ats () {
   }
 
   const numberBodyTemplate = (data) => {
-    return <div style={{cursor: 'pointer'}}>{data.trunks && data.trunks.length > 0 ? data.trunks.map(item => {return <a key={item._id} href={`http://pbx.profpub.ru/index/trunks/trunk/${item._id}`} target='_blank' className='trunk-item' style={{textDecoration:'none'}} data-pr-tooltip={`${item.lastcall ? new Date(item.lastcall).toLocaleDateString("ru-RU") : ''}${item.lastcall ? ' / ' : ''}${item.region}`} data-pr-position="top">{item.did}<br></br></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'0rem'}} />}</div>
+    return <div style={{cursor: 'pointer'}}>{data.trunks && data.trunks.length > 0 ? data.trunks.map(item => {return <a key={item._id} href={`http://pbx.profpub.ru/index/trunks/trunk/${item._id}`} target='_blank' className='trunk-item' style={{textDecoration:'none'}} data-pr-tooltip={`${item.lastcall ? new Date(item.lastcall).toLocaleDateString("ru-RU") : ''}${item.lastcall ? ' / ' : ''}${item.region}  /  ${item.provider}`} data-pr-position="top" onContextMenu={e => copyToClipboard(e, item.did)}>{item.did}<br></br></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'0rem'}} />}</div>
   }
 
   const codeBodyTemplate = (data) => {
@@ -90,6 +98,7 @@ export default function Ats () {
           <Column header='Маршрут' field='route' headerStyle={{ backgroundColor:'white' }} />
           <Column header='Очередь' field='queue.name' body={queueBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
         </DataTable>
+        <Toast ref={copyToast} />
       </main>
     </MainLayout>
     </>
