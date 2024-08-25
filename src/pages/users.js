@@ -142,6 +142,7 @@ export default function Users () {
   }
 
   const userHotelsListMenu = (e, id) => {
+    e.preventDefault()
     const usr = users.filter(user => user._id == id)
     chipMenu.current.toggle(e)
     setCurrentUserId(id)
@@ -237,7 +238,9 @@ export default function Users () {
                         {post.staff.map(item => {return users && users.map(user => {if (user._id == item) {return (
                         <>
                           <Menu model={chipMenuItems} popup ref={chipMenu} id="popup_menu_left" />
-                          <Chip key={user._id} label={user.lastname ? user.lastname : user.user} removable className="custom-target-chip mx-1 cursor-pointer" onRemove={() => deleteUser(post._id, user._id)} onClick={(e) => userHotelsListMenu(e, user._id)} aria-controls="popup_menu_left" aria-haspopup data-pr-tooltip={user.user} data-pr-position="top" />
+                          <a href={`https://broniryem.ru/admin/accounts/account/${user._id}`} target='_blank' style={{textDecoration:'none'}}>
+                            <Chip key={user._id} label={user.lastname ? user.lastname : user.user} removable className="custom-target-chip mx-1 cursor-pointer" onRemove={() => deleteUser(post._id, user._id)} onContextMenu={(e) => userHotelsListMenu(e, user._id)} aria-controls="popup_menu_left" aria-haspopup data-pr-tooltip={`${user.user} (${user.hotels.length})`}data-pr-position="top" />
+                          </a>
                         </>
                         )}})
                           }).sort((a, b) => a.label > b.label ? -1 : 1)}
