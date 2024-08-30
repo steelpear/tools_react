@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react'
 import useSWR, {useSWRConfig} from 'swr'
+import useSWRImmutable from 'swr/immutable'
 import Head from 'next/head'
 import { MainLayout } from '../components/MainLayout'
+import { Loader } from '../components/Loader'
+import { FiltersAts } from '../components/FiltersAts'
 import { PhoneNumberInfo } from '../components/PhoneNumberInfo'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
@@ -15,12 +18,15 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
 export default function Ats () {
   const copyToast = useRef(null)
+  const inputFile = useRef(null)
   const { mutate } = useSWRConfig()
+  const [isMut, setIsMut] = useState(false)
   const [selectedDirections, setSelectedDirections] = useState(null)
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
 
   const { data: directions, isLoading } = useSWR('/api/dir', fetcher)
+  const { data: operatorgroups } = useSWRImmutable('/api/operatorgroups', fetcher)
 
   const onGlobalFilterChange = (e) => {
     const value = e.target.value
@@ -40,13 +46,51 @@ export default function Ats () {
     navigator.clipboard.writeText(did)
     copyToast.current.show({severity:'info', detail:'Скопировано в буфер обмена', life: 2000})
   }
+  const importIds = async e => {
+    const { files } = e.target
+    if (files && files.length) {
+      const reader = new FileReader()
+      reader.readAsText(files[0])
+      reader.onload = async () => {
+        setIsMut(true)
+        await mutate('/api/dir', fetcher('/api/dir', {
+          method: 'POST',
+          headers: { 'Content-type': 'application/json; charset=UTF-8' },
+          body: JSON.stringify(JSON.parse(reader.result))
+        }), {revalidate: false, revalidateOnFocus: false})
+        setIsMut(false)
+      }
+    }
+  }
+
+  const exportIds = () => {
+    const ids = JSON.stringify(selectedDirections.map(item => item._id))
+    const date = new Date()
+    const name = 'export-directions-list_' + ('0' + date.getDate()).slice(-2) + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear() + '_' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '.json'
+    const blob = new Blob([ids], { type: "text/plain" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.download = name
+    link.href = url
+    link.click()
+  }
+
+  const resetFilters = async () => {
+    setIsMut(true)
+    await mutate('/api/dir')
+    setIsMut(false)
+  }
 
   const headerTemplate = () => {
     return (
       <div className='flex align-items-center justify-content-between'>
         <div className='flex align-items-center'>
-          <Button icon="pi pi-file-export" rounded text severity="info" size='large' onClick={() => exportIds()} aria-controls="filter_menu" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
+          <input style={{display:"none"}} ref={inputFile} onChange={importIds} type="file" accept=".json" />
+          <Button icon="pi pi-file-import" rounded text severity="info" size='large' onClick={() => inputFile.current.click()} aria-controls="import" aria-haspopup tooltip="Импорт" tooltipOptions={{position: 'top'}} />
+          <Button icon="pi pi-file-export" rounded text severity="info" size='large' disabled={!selectedDirections || selectedDirections.length < 1} onClick={() => exportIds()} aria-controls="export" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
+          <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <PhoneNumberInfo />
+          <FiltersAts operatorgroups={operatorgroups} />
         </div>
         <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
           <i className='pi pi-search pt-1' />
@@ -86,7 +130,7 @@ export default function Ats () {
       <main>
         <Tooltip target=".operator-item" />
         <Tooltip target=".trunk-item" />
-        <DataTable value={directions} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,directions ? directions.length : 0]} filters={filters} globalFilterFields={['name','region','queue.name','route','trunks.code','trunks.did']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+        <DataTable value={directions} resizableColumns loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,directions ? directions.length : 0]} filters={filters} globalFilterFields={['name','region','queue.name','route','trunks.code','trunks.did']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
           <Column selectionMode='multiple' headerStyle={{ width: '3rem',backgroundColor:'white',paddingLeft:'unset' }} />
           <Column header='Объект' field='name' body={data => <a href={`http://pbx.profpub.ru/index/directions/direction/${data._id}`} target="_blank" style={{textDecoration:'none'}}>{data.name}</a>} headerStyle={{ backgroundColor:'white' }} />
@@ -98,6 +142,7 @@ export default function Ats () {
           <Column header='Маршрут' field='route' headerStyle={{ backgroundColor:'white' }} />
           <Column header='Очередь' field='queue.name' body={queueBodyTemplate} headerStyle={{ backgroundColor:'white' }} />
         </DataTable>
+        {isMut && <Loader mutate={true} />}
         <Toast ref={copyToast} />
       </main>
     </MainLayout>

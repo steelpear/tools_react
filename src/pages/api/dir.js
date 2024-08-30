@@ -6,7 +6,8 @@ const handler = async (req, res) => {
       },
       body: JSON.stringify({ skip: 0, limit: 10000, sort: {} })
     })
-    const response = await resp.json()
+    let response = await resp.json()
+    if (req.body) response = response.filter(item => req.body.includes(item._id))
 
     const prov = await fetch('http://pbx.profpub.ru/api/providers/list', {
       method: 'POST',

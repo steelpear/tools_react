@@ -5,7 +5,6 @@ import Head from 'next/head'
 import { Loader } from '../components/Loader'
 import { MainLayout } from '../components/MainLayout'
 import { FiltersButton } from '../components/FiltersButton'
-import { PhoneNumberInfo } from '../components/PhoneNumberInfo'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
@@ -292,7 +291,6 @@ export default function Home () {
           <FiltersButton mode={btnValue} templates={hotels['templates']} />
           <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <Button icon="pi pi-file-export" disabled={selectedHotels.length < 1} rounded text severity="info" size='large' onClick={() => exportIds()} aria-controls="filter_menu" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
-          <PhoneNumberInfo />
         </div>
         <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
           <i className='pi pi-search pt-1' />
