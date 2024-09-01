@@ -25,7 +25,7 @@ export default function Ats () {
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
 
-  const { data: directions, isLoading } = useSWR('/api/dir', fetcher)
+  const { data: directions, isLoading } = useSWR('/api/dir', fetcher, {revalidate: false, revalidateOnFocus: false})
   const { data: operatorgroups } = useSWRImmutable('/api/operatorgroups', fetcher)
 
   const onGlobalFilterChange = (e) => {
@@ -56,7 +56,7 @@ export default function Ats () {
         await mutate('/api/dir', fetcher('/api/dir', {
           method: 'POST',
           headers: { 'Content-type': 'application/json; charset=UTF-8' },
-          body: JSON.stringify(JSON.parse(reader.result))
+          body: JSON.stringify({mode: 'import', data: JSON.parse(reader.result)})
         }), {revalidate: false, revalidateOnFocus: false})
         setIsMut(false)
       }
@@ -90,7 +90,7 @@ export default function Ats () {
           <Button icon="pi pi-file-export" rounded text severity="info" size='large' disabled={!selectedDirections || selectedDirections.length < 1} onClick={() => exportIds()} aria-controls="export" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
           <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <PhoneNumberInfo />
-          <FiltersAts operatorgroups={operatorgroups} />
+          <FiltersAts operatorgroups={operatorgroups} sel={selectedDirections} />
         </div>
         <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
           <i className='pi pi-search pt-1' />

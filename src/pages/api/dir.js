@@ -7,7 +7,7 @@ const handler = async (req, res) => {
       body: JSON.stringify({ skip: 0, limit: 10000, sort: {} })
     })
     let response = await resp.json()
-    if (req.body) response = response.filter(item => req.body.includes(item._id))
+    if (req.body && req.body.mode === 'import') response = response.filter(item => req.body.data.includes(item._id))
 
     const prov = await fetch('http://pbx.profpub.ru/api/providers/list', {
       method: 'POST',
@@ -18,7 +18,7 @@ const handler = async (req, res) => {
     })
     const providers = await prov.json()
 
-    const directions = await response.map(item => {
+    let directions = await response.map(item => {
       return (
         {
           _id: item._id,
@@ -38,6 +38,7 @@ const handler = async (req, res) => {
             )
           }),
           groups: item.operatorGroups.map(item => item.name),
+          groups_ids: item.operatorGroups.map(item => item._id),
           trunks: (item.trunks && item.trunks.length > 0) ? item.trunks.map(item => {
             return (
               {
@@ -54,6 +55,7 @@ const handler = async (req, res) => {
         }
       )
     })
+    if (req.body && req.body.mode === 'filter') directions = directions.filter(item => item.groups_ids.includes(req.body.data))
 
     res.json(directions)
   }
