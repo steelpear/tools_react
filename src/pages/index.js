@@ -8,6 +8,8 @@ import { FiltersButton } from '../components/FiltersButton'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { InputText } from 'primereact/inputtext'
+import { IconField } from 'primereact/iconfield';
+import { InputIcon } from 'primereact/inputicon';
 import { Button } from 'primereact/button'
 import { MultiSelect } from 'primereact/multiselect'
 import { SelectButton } from 'primereact/selectbutton'
@@ -187,7 +189,7 @@ export default function Home () {
   }
 
   const copyToClipboard = (data) => {
-    navigator.clipboard.writeText(data)
+    navigator.clipboard.writeText(data.replace(/[^\d]/g,'').slice(1))
     toast.current.show({severity:'info', detail:'Скопировано в буфер обмена', life: 2000})
   }
 
@@ -225,11 +227,6 @@ export default function Home () {
     _filters['global'].value = value
     setFilters(_filters)
     setGlobalFilterValue(value)
-  }
-
-  const clearFilter = () => {
-    setFilters({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
-    setGlobalFilterValue('')
   }
 
   const resetFilters = async () => {
@@ -286,16 +283,17 @@ export default function Home () {
           <Image src='logo.svg' alt='portal' width='18' />
           <span style={{margin:'0 10px 0 3px',fontWeight:'400',fontSize:13}}>Нет сайта</span>
           <SelectButton value={btnValue} onChange={(e) => setBtnValue(e.value)} itemTemplate={selectButtonTemplate} optionLabel="value" options={btnOptions} tooltip="ПУМА on/off/all" tooltipOptions={{position: 'top'}}style={{marginInline: 10}} />
-          <Button icon="pi pi-file-import" rounded text severity="info" size='large' onClick={() => inputFile.current.click()} aria-controls="filter_menu" aria-haspopup tooltip="Импорт" tooltipOptions={{position: 'top'}} />
+          <Button icon="pi pi-file-import" rounded text severity="info" onClick={() => inputFile.current.click()} aria-controls="filter_menu" aria-haspopup tooltip="Импорт" tooltipOptions={{position: 'top'}} />
           <input style={{display:"none"}} ref={inputFile} onChange={importIds} type="file" accept=".json" />
           <FiltersButton mode={btnValue} templates={hotels['templates']} />
-          <Button icon="pi pi-filter-slash" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
-          <Button icon="pi pi-file-export" disabled={selectedHotels.length < 1} rounded text severity="info" size='large' onClick={() => exportIds()} aria-controls="filter_menu" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
+          <Button icon="pi pi-filter-slash" rounded text severity="info" onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
+          <Button icon="pi pi-file-export" disabled={selectedHotels.length < 1} rounded text severity="info" onClick={() => exportIds()} aria-controls="filter_menu" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
         </div>
-        <div className='flex align-items-center p-input-icon-left p-input-icon-right'>
-          <i className='pi pi-search pt-1' />
-          <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder='Поиск'/>
-          {globalFilterValue ? <i className='pi pi-times' onClick={clearFilter} style={{ cursor: 'pointer' }} /> : <i className='pi pi-times pt-1' style={{ color: 'lightgrey' }} />}
+        <div className="flex justify-content-end">
+          <IconField iconPosition="left">
+            <InputIcon className="pi pi-search" />
+            <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Поиск" className='w-full md:w-12rem' />
+          </IconField>
         </div>
       </div>
     )
@@ -315,7 +313,7 @@ export default function Home () {
   }
 
   const staffBodyTemplate = (data) => {
-    return <div style={{cursor: 'pointer'}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{data.staff && data.staff.length > 0 ? data.staff.map(item => {return <a key={item._id} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target='_blank' style={{textDecoration:'none'}}><div style={{fontSize:'.78rem',margin:'0px',lineHeight:'.77rem'}}>{item.lastname ? item.lastname : item.user}<br></br></div></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'normal', cursor:'pointer'}} />}</div>
+    return <div style={{cursor: 'pointer'}} onContextMenu={(e) => handleContextMenuStaff(e,data.staff,data._id)}>{data.staff && data.staff.length > 0 ? data.staff.map(item => {return <a key={item._id} href={`https://broniryem.ru/admin/accounts/account/${item._id}`} target='_blank' style={{textDecoration:'none'}}><div style={{fontSize:'.75rem',margin:'0px',lineHeight:'.77rem'}}>{item.lastname ? item.lastname : item.user}<br></br></div></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'normal', cursor:'pointer'}} />}</div>
   }
 
   const linkBodyTemplate = (data) => {
@@ -368,9 +366,9 @@ export default function Home () {
               <label className='label' htmlFor='phone2'>phone2</label>
             </span>}
             <div className='flex align-items-center justify-content-between'>
-              <Button className={`${!isAddPhone2 && 'ml-1'}`} icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => closeContextMenu()} />
-              {(!isTwoPhones && !isAddPhone2) && <Button className='ml-1' icon='pi pi-plus' severity='secondary' text rounded size='large' onClick={() => setIsAddPhone2(true)} />}
-              <Button icon='pi pi-check' severity='success' text rounded size='large' loading={isPhoneUpdating} onClick={() => handlePhoneState(isAddPhone2 ? 'add' : 'one')} />
+              <Button className={`${!isAddPhone2 && 'ml-1'}`} icon='pi pi-times' severity='danger' text rounded onClick={() => closeContextMenu()} />
+              {(!isTwoPhones && !isAddPhone2) && <Button className='ml-1' icon='pi pi-plus' severity='secondary' text rounded onClick={() => setIsAddPhone2(true)} />}
+              <Button icon='pi pi-check' severity='success' text rounded loading={isPhoneUpdating} onClick={() => handlePhoneState(isAddPhone2 ? 'add' : 'one')} />
             </div>
           </div>
         }
@@ -385,15 +383,15 @@ export default function Home () {
               <label className='label' htmlFor='phone2'>phone2</label>
             </div>
             <div className='flex align-items-center justify-content-between'>
-              <Button icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => closeContextEmptyMenu()} />
-              <Button icon='pi pi-check' severity='success' text rounded size='large' disabled={!currentPhone1} loading={isPhoneUpdating} onClick={() => handlePhoneState('empty')} />
+              <Button icon='pi pi-times' severity='danger' text rounded onClick={() => closeContextEmptyMenu()} />
+              <Button icon='pi pi-check' severity='success' text rounded disabled={!currentPhone1} loading={isPhoneUpdating} onClick={() => handlePhoneState('empty')} />
             </div>
           </div>
         }
         {contextStaffMenu &&
           <div className='context-menu-wrap' style={{top:positions.y, left:positions.x}}>
             <MultiSelect value={selectedUsers} onChange={(e) => setSelectedUsers(e.value)} options={staffList} optionLabel='label' optionValue='value' optionGroupLabel='label' optionGroupChildren='items' display='chip' filter placeholder='Менеджер' className='w-full md:w-20rem' showClear dataKey='item._id' />
-            <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded size='large' onClick={() => setContextStaffMenu(false)} />
+            <Button className='ml-2' icon='pi pi-times' severity='danger' text rounded onClick={() => setContextStaffMenu(false)} />
             <Button icon='pi pi-check' severity='success' text rounded size='large' disabled={(currentStaffData == null || currentStaffData.length == 0) && (selectedUsers == null || selectedUsers.length == 0) || (selectedUsers == currentStaffData)} loading={isStuffUpdating} onClick={() => handleStuffList()} />
           </div>
         }

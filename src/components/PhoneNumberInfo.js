@@ -26,7 +26,7 @@ export const PhoneNumberInfo = () => {
 
   return (
     <div className="card flex justify-content-center">
-      <Button icon="pi pi-mobile" rounded text severity="info" size='large' aria-label="Region" onClick={(e) => op.current.toggle(e)} tooltip="Информация о номере" tooltipOptions={{ position: 'top' }} />
+      <Button icon="pi pi-mobile" rounded text severity="info" aria-label="Region" onClick={(e) => op.current.toggle(e)} tooltip="Информация о номере" tooltipOptions={{ position: 'top' }} />
       <OverlayPanel ref={op} showCloseIcon style={{width:300}}>
         <div className="flex justify-content-center">
           <div>
@@ -35,8 +35,8 @@ export const PhoneNumberInfo = () => {
           </div>
         </div>
         <div className="flex align-items-center justify-content-between mt-2">
-          <Button icon="pi pi-times" rounded text severity="danger" size='large' aria-label="Close" onClick={(e) => closeOverlayPanel(e)} tooltip="Очистить и закрыть" tooltipOptions={{ position: 'left' }} disabled={!phoneValue} />
-          <Button icon="pi pi-check" rounded text severity="info" size='large' aria-label="GetInfo" onClick={() => getPhoneInfo()} tooltip="Получить информацию" tooltipOptions={{ position: 'right' }} loading={phoneDataLoading} disabled={!phoneValue} />
+          <Button icon="pi pi-times" rounded text severity="danger" aria-label="Close" onClick={(e) => closeOverlayPanel(e)} tooltip="Очистить и закрыть" tooltipOptions={{ position: 'left' }} disabled={!phoneValue} />
+          <Button icon="pi pi-check" rounded text severity="info" aria-label="GetInfo" onClick={() => getPhoneInfo()} tooltip="Получить информацию" tooltipOptions={{ position: 'right' }} loading={phoneDataLoading} disabled={!phoneValue} />
         </div>
         {phoneData &&
         <div>
