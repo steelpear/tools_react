@@ -47,9 +47,9 @@ export const FiltersAts = ({...params}) => {
     return <div className='text-sm'>{option.name}</div>
   }
 
-  const valueGroupsTemplate = (option, props) => {
+  const selectedGroupsTemplate = (option) => {
     if (option) return <div className='text-sm'>{option.name}</div>
-    return <span className='text-sm'>{props.placeholder}</span>
+    return <span className='text-sm'>Группы</span>
   }
 
   const selectedRouteTemplate = (option, props) => {
@@ -86,7 +86,7 @@ export const FiltersAts = ({...params}) => {
         <i className="pi pi-arrow-right" style={{ color: 'slateblue', fontSize: '1.3rem' }} />
         <Dropdown value={selectedRoute} onChange={(e) => setSelectedRoute(e.value)} options={routes} optionLabel="label" optionValue="value" showClear placeholder="Маршрут" valueTemplate={selectedRouteTemplate} itemTemplate={routeOptionTemplate} className="w-full md:w-10rem ml-1" />
         {selectedRoute == 'roundRobin' &&<Dropdown value={selectedQueue} onChange={(e) => setSelectedQueue(e.value)} options={params.queues} optionLabel="name" optionValue="_id" showClear placeholder="Очередь" valueTemplate={selectedQueueTemplate} itemTemplate={queueOptionTemplate} className="w-full md:w-10rem ml-2" />}
-        <MultiSelect value={selectedGroups} onChange={(e) => setSelectedGroups(e.value)} options={params.operatorgroups} optionLabel="name" optionValue="_id" showSelectAll={false} maxSelectedLabels={2} selectedItemsLabel={`Выбрано ${selectedGroups && selectedGroups.length > 1 ? selectedGroups.length : ''}`} showClear placeholder="Группы" filter={false} valueTemplate={valueGroupsTemplate} itemTemplate={itemGroupsTemplate} className="w-full md:w-10rem ml-2" />
+        <MultiSelect value={selectedGroups} onChange={(e) => setSelectedGroups(e.value)} options={params.operatorgroups} optionLabel="name" showSelectAll={false} maxSelectedLabels={2} selectedItemsLabel={`Выбрано ${selectedGroups && selectedGroups.length > 1 ? selectedGroups.length : ''}`} showClear placeholder="Группы" filter={false} selectedItemTemplate={selectedGroupsTemplate} itemTemplate={itemGroupsTemplate} className="w-full md:w-10rem ml-2" />
         <TriStateCheckbox value={forced} onChange={(e) => setForced(e.value)} className="ml-2" aria-haspopup tooltip="Принудительная маршрутизация" tooltipOptions={{position: 'top'}} />
         <Button icon="pi pi-forward" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-haspopup tooltip="Пакетная обработка" tooltipOptions={{position: 'top'}} />
       </div>}

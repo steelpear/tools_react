@@ -148,8 +148,8 @@ export default function Ats () {
           <Column header='Код' field='trunks.code' body={codeBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
           <Column header='Операторы' field='operators.lastname' body={operatorsBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
           <Column header='Группы' field='groups' body={groupsBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Маршрут' field='route' headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Очередь' field='queue.name' body={queueBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
+          <Column header='Маршрут' field='route' sortable headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
+          <Column header='Очередь' field='queue.name' sortable body={queueBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
           <Column header='Принуд.' field='forced' body={forcedBodyTemplate} headerStyle={{ backgroundColor:'white', padding:'unset' }} />
         </DataTable>
         {isMut && <Loader mutate={true} />}

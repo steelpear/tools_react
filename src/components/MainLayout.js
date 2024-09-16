@@ -19,6 +19,7 @@ export function MainLayout({ children, ...params }) {
         <p className='hover:text-blue-700 w-full' onClick={() => router.push('/')} style={{color: router.route === '/' && 'red'}}><i className='pi pi-home mr-3'></i>Объекты</p>
         <p className='hover:text-blue-700 w-full' onClick={() => router.push('/users')} style={{color: router.route === '/users' && 'red'}}><i className='pi pi-user mr-3'></i>Посты</p>
         <p className='hover:text-blue-700 w-full' onClick={() => router.push('/ats')} style={{color: router.route === '/ats' && 'red'}}><i className='pi pi-phone mr-3'></i>Телефония</p>
+        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/idfinder')} style={{color: router.route === '/idfinder' && 'red'}}><i className='pi pi-table mr-3'></i>ID Finder</p>
       </Sidebar>
       <Button icon='pi pi-bars' severity='secondary' rounded text onClick={() => setVisibleSide(true)} />
       <div style={{fontSize: 20,marginInline: 20}}>{params.title}{router.route === '/' && <span style={{fontSize: 14,marginInline: 10}}><Badge value={params.count} /></span>}</div>
