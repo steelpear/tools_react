@@ -37,10 +37,7 @@ export default function Home () {
   const [isStuffUpdating, setIsStuffUpdating] = useState(false)
   const [isTwoPhones, setIsTwoPhones] = useState(false)
   const [isAddPhone2, setIsAddPhone2]= useState(false)
-  const [filters, setFilters] = useState({
-    global: {value: null, matchMode: FilterMatchMode.CONTAINS},
-    'staff.lastname': {value: null, matchMode: FilterMatchMode.CONTAINS}
-  })
+  const [filters, setFilters] = useState({global: {value: null, matchMode: FilterMatchMode.CONTAINS}})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
   const [contextMenu, setContextMenu] = useState(false)
   const [contextEmptyMenu, setContextEmptyMenu] = useState(false)
@@ -229,6 +226,11 @@ export default function Home () {
     setGlobalFilterValue(value)
   }
 
+  const initFilters = () => {
+    setFilters({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
+    setGlobalFilterValue('')
+  }
+
   const resetFilters = async () => {
     if (btnValue === 'PumaOn') await mutate('https://broniryem.ru/api/Tools/hotels')
     else setBtnValue('PumaOn')
@@ -289,10 +291,11 @@ export default function Home () {
           <Button icon="pi pi-filter-slash" rounded text severity="info" onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <Button icon="pi pi-file-export" disabled={selectedHotels.length < 1} rounded text severity="info" onClick={() => exportIds()} aria-controls="filter_menu" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
         </div>
-        <div className="flex justify-content-end">
+        <div className="flex justify-content-center">
           <IconField iconPosition="left">
-            <InputIcon className="pi pi-search" />
-            <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Поиск" className='w-full md:w-12rem' />
+            <InputIcon className="pi pi-search pt-1" />
+            <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Поиск" className='w-full md:w-16rem pr-5' />
+            <InputIcon className="pi pi-times cursor-pointer -ml-4 pt-1" onClick={() => initFilters()} />
           </IconField>
         </div>
       </div>

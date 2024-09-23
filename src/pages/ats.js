@@ -39,7 +39,7 @@ export default function Ats () {
     setGlobalFilterValue(value)
   }
 
-  const clearFilter = () => {
+  const initFilters = () => {
     setFilters({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
     setGlobalFilterValue('')
   }
@@ -96,10 +96,17 @@ export default function Ats () {
           <PhoneNumberInfo />
           <FiltersAts operatorgroups={operatorgroups} sel={selectedDirections} queues={queues} />
         </div>
-        <div className="flex justify-content-end">
+        {/* <div className="flex justify-content-end">
           <IconField iconPosition="left">
             <InputIcon className="pi pi-search" />
             <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Поиск"  className='w-full md:w-12rem' />
+          </IconField>
+        </div> */}
+        <div className="flex justify-content-center">
+          <IconField iconPosition="left">
+            <InputIcon className="pi pi-search pt-1" />
+            <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Поиск" className='w-full md:w-16rem pr-5' />
+            <InputIcon className="pi pi-times cursor-pointer -ml-4 pt-1" onClick={() => initFilters()} />
           </IconField>
         </div>
       </div>
