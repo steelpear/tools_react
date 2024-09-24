@@ -26,6 +26,7 @@ export default function Finder () {
   const [regularText, setRegularText] = useState('')
   const [checkedRegular, setCheckedRegular] = useState(false)
   const [checkedSource, setCheckedSource] = useState(false)
+  const [checkedMode, setCheckedMode] = useState(false)
   const [textAreaLength, setTextAreaLength] = useState(null)
 
   const clearArea = () => {
@@ -48,17 +49,30 @@ export default function Finder () {
     }
   }
 
-  const findByName = async () => {
+  const findIds = () => {
     const txt = textAreaItems.split('\n')
     const text = txt.map(item => item.trim())
-    const res = await fetch('/api/finderbyname', {
-      method: 'POST',
-      headers: { 'Content-type': 'application/json; charset=UTF-8' },
-      body: JSON.stringify(text)
-    })
-    const resIds = await res.json()
-    const ids = resIds.map(item => item._id)
-    setResponseIds(ids)
+    if (checkedMode) {
+      const out = []
+      text.map(item => {
+        fetch(checkedSource ? '/api/finderbyurl' : '/api/finderbyname', {
+          method: 'POST',
+          headers: { 'Content-type': 'application/json; charset=UTF-8' },
+          body: JSON.stringify({data: item, mode: 'estimated'})})
+        .then((response) => {return response.json()})
+        .then((data) => {if (data && data.length > 0) {out.push(data[0]._id)}})
+        .catch(error => console.log(error))
+      })
+      setResponseIds(out)
+    } else {
+      fetch(checkedSource ? '/api/finderbyurl' : '/api/finderbyname', {
+        method: 'POST',
+        headers: { 'Content-type': 'application/json; charset=UTF-8' },
+        body: JSON.stringify({data: text, mode: 'exact'})})
+      .then((response) => {return response.json()})
+      .then((data) => {setResponseIds(data.map(item => item._id))})
+      .catch(error => console.log(error))
+    }
  }
 
  const exportIds = () => {
@@ -92,9 +106,11 @@ export default function Finder () {
             <div className="mt-2 flex justify-content-center align-items-center">
               {textAreaLength > 0 && <span className='mr-2 w-full md:w-5rem'>Строк: {textAreaLength}</span>}
               <Button icon="pi pi-times" disabled={!textAreaItems} rounded outlined severity="danger" aria-label="ClearArea" onClick={() => clearArea()} />
-              <label htmlFor='switch' className='ml-4 text-xs w-full md:w-2rem'>{checkedSource ? 'Urls' : 'Name'}</label>
+              <label htmlFor='switch' className='ml-4 text-sm w-full md:w-3rem'>{checkedSource ? 'URL' : 'Name'}</label>
               <InputSwitch checked={checkedSource} onChange={(e) => setCheckedSource(e.value)} className='ml-1' inputId="switch" />
-              <Button label="Найти" icon="pi pi-search" disabled={!textAreaItems} className="w-full md:w-15rem ml-4" onClick={() => findByName()} />
+              <label htmlFor='switch1' className='ml-4 text-sm w-full md:w-4rem'>{checkedMode ? 'Вхожд.' : 'Точное'}</label>
+              <InputSwitch checked={checkedMode} onChange={(e) => setCheckedMode(e.value)} className='ml-1' inputId="switch1" />
+              <Button label="Найти" icon="pi pi-search" disabled={!textAreaItems} className="w-full md:w-15rem ml-4" onClick={() => findIds()} />
             </div>
           </div>
           {responseIds && <div className='flex align-items-center px-3'>

@@ -2,6 +2,7 @@ import { Schema, model, models } from 'mongoose'
 
 const Hotel = new Schema({
   name: String,
+  name_slug: String,
   puma: Boolean,
   city: Array,
   staff: Array,
