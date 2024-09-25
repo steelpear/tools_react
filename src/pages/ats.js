@@ -19,10 +19,13 @@ import { FilterMatchMode } from 'primereact/api'
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
 export default function Ats () {
+  const megafonToast = useRef(null)
   const copyToast = useRef(null)
   const inputFile = useRef(null)
   const { mutate } = useSWRConfig()
+
   const [isMut, setIsMut] = useState(false)
+  const [expandedRows, setExpandedRows] = useState(null)
   const [selectedDirections, setSelectedDirections] = useState(null)
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
@@ -85,6 +88,18 @@ export default function Ats () {
     setIsMut(false)
   }
 
+  const getBalnce = async (login, password) => {
+    const resp = await fetch('/api/getmegafonbalance', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({login, password})
+    })
+    const response = await resp.text()
+    const arr = response.match(/<balance>(.*?)<\/balance>/g).map(val => val.replace(/<\/?balance>/g, ''))
+    const balance = arr.join('')
+    megafonToast.current.show({severity:'info', summary: 'Баланс', detail: balance, life: 3000})
+  }
+
   const headerTemplate = () => {
     return (
       <div className='flex align-items-center justify-content-between'>
@@ -131,6 +146,26 @@ export default function Ats () {
     return <div className='flex justify-content-center'>{data.forced ? <i className='pi pi-check' style={{color: 'green'}} /> : <i className='pi pi-times' style={{color: 'red'}} />}</div>
   }
 
+  const allowExpansion = (rowData) => { return rowData }
+
+  const rowExpansionTemplate = (data) => {
+    return (
+      <div className='px-3 py-2'>
+        {(data.trunks && data.trunks.length > 0) && data.trunks.map(item => {
+          return (
+            <div key={item._id} className='flex align-items-center'>
+              <i className='pi pi-phone mr-1' />
+              <div className='mr-1'>{item.did} (<span style={{color: `${item.provider === 'Мегафон' && '#00B956' ||item.provider === 'Билайн' && '#FFCC01' || item.provider === 'Задарма' && '#D8232A'}`}}>{item.provider}</span>/{item.region}{item.lastcall && '/'}{item.lastcall && new Date(item.lastcall).toLocaleDateString("ru-RU")})</div>
+              {item.provider === 'Мегафон' && <div>
+                <Button icon='pi pi-dollar' rounded text severity='info' onClick={() => getBalnce(item.did, item.password)} aria-controls='balance' aria-haspopup tooltip='Баланс' tooltipOptions={{position: 'top'}} />
+              </div>}
+              <br/>
+            </div>
+        )})}
+      </div>
+    )
+  }
+
   return (
     <>
     <Head>
@@ -140,7 +175,8 @@ export default function Ats () {
       <main>
         <Tooltip target=".operator-item" />
         <Tooltip target=".trunk-item" />
-        <DataTable value={directions} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,directions ? directions.length : 0]} filters={filters} globalFilterFields={['name','region','queue.name','route','trunks.code','trunks.did']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+        <DataTable value={directions} expandedRows={expandedRows} onRowToggle={(e) => setExpandedRows(e.data)} rowExpansionTemplate={rowExpansionTemplate} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,directions ? directions.length : 0]} filters={filters} globalFilterFields={['name','region','queue.name','route','trunks.code','trunks.did']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+          <Column expander={allowExpansion} style={{ width: '2.1rem' }} />
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
           <Column selectionMode='multiple' headerStyle={{ width: '3rem', backgroundColor:'white',paddingLeft:'unset' }} />
           <Column header='Объект' field='name' body={data => <a href={`http://pbx.profpub.ru/index/directions/direction/${data._id}`} target="_blank" style={{textDecoration:'none'}}>{data.name}</a>} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
@@ -154,7 +190,8 @@ export default function Ats () {
           <Column header='Принуд.' field='forced' body={forcedBodyTemplate} headerStyle={{ backgroundColor:'white', padding:'unset' }} />
         </DataTable>
         {isMut && <Loader mutate={true} />}
-        <Toast ref={copyToast} />
+        <Toast ref={copyToast} position="top-center" />
+        <Toast ref={megafonToast} position="top-center" />
       </main>
     </MainLayout>
     </>

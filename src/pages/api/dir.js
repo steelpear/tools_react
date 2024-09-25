@@ -45,6 +45,7 @@ const handler = async (req, res) => {
                 code: item.code,
                 _id: item.trunk && item.trunk._id,
                 did: item.trunk && item.trunk.did,
+                password: item.trunk && item.trunk.password,
                 provider: item.trunk && providers.filter(el => el._id == item.trunk.provider).map(el => el.name).join(''),
                 region: item.trunk && item.trunk.region,
                 lastcall: item.trunk && item.trunk.lastCall
