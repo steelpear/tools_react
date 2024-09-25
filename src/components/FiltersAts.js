@@ -81,7 +81,7 @@ export const FiltersAts = ({...params}) => {
 
   return (
     <div className="card flex align-items-center ml-1">
-      <Dropdown value={selectedGroup} onChange={(e) => selectedGroupFilter(e)} options={params.operatorgroups} optionLabel="name" optionValue="_id" showClear placeholder="Фильтр" valueTemplate={selectedGroupTemplate} itemTemplate={groupOptionTemplate} disabled={params.sel && params.sel.length > 0} className="w-full md:w-10rem" />
+      <Dropdown value={selectedGroup} onChange={(e) => selectedGroupFilter(e)} options={params.operatorgroups} optionLabel="name" optionValue="_id" showClear placeholder="Фильтр" valueTemplate={selectedGroupTemplate} itemTemplate={groupOptionTemplate} disabled={params.sel && params.sel.length > 0} className="w-full md:w-11rem" />
       {(params.sel && params.sel.length > 0) && <div className="flex align-items-center ml-2">
         <i className="pi pi-arrow-right" style={{ color: 'slateblue', fontSize: '1.3rem' }} />
         <Dropdown value={selectedRoute} onChange={(e) => setSelectedRoute(e.value)} options={routes} optionLabel="label" optionValue="value" showClear placeholder="Маршрут" valueTemplate={selectedRouteTemplate} itemTemplate={routeOptionTemplate} className="w-full md:w-10rem ml-1" />
