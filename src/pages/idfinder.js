@@ -1,26 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import Head from 'next/head'
-import {useSWRConfig} from 'swr'
 import { MainLayout } from '../components/MainLayout'
-import { OverlayPanel } from 'primereact/overlaypanel'
 import { InputTextarea } from 'primereact/inputtextarea'
-import { Fieldset } from 'primereact/fieldset'
-import { Chip } from 'primereact/chip'
-import { Badge } from 'primereact/badge'
 import { Button } from 'primereact/button'
 import { InputText } from 'primereact/inputtext'
 import { InputSwitch } from 'primereact/inputswitch'
-import { Card } from 'primereact/card'
-import { MultiSelect } from 'primereact/multiselect'
-import { Tooltip } from 'primereact/tooltip'
-import { Toast } from 'primereact/toast'
-import { Menu } from 'primereact/menu'
-
-const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
 export default function Finder () {
-  const { mutate } = useSWRConfig()
-
   const [textAreaItems, setTextAreaItems] = useState('')
   const [responseIds, setResponseIds] = useState('')
   const [regularText, setRegularText] = useState('')

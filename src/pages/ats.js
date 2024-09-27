@@ -155,11 +155,10 @@ export default function Ats () {
           return (
             <div key={item._id} className='flex align-items-center'>
               <i className='pi pi-phone mr-1' />
-              <div className='mr-1'>{item.did} (<span style={{color: `${item.provider === 'Мегафон' && '#00B956' ||item.provider === 'Билайн' && '#FFCC01' || item.provider === 'Задарма' && '#D8232A'}`}}>{item.provider}</span>/{item.region}{item.lastcall && '/'}{item.lastcall && new Date(item.lastcall).toLocaleDateString("ru-RU")})</div>
-              {item.provider === 'Мегафон' && <div>
+              <div className='mr-1'>{item.did} (<span style={{color: `${item.provider === 'Мегафон' && '#00B956' || item.provider === 'Мультифон' && '#00B944'||item.provider === 'Билайн' && '#FFCC01' || item.provider === 'Задарма' && '#D8232A'}`}}>{item.provider}</span> / {item.region}{item.lastcall && ' / '}{item.lastcall && new Date(item.lastcall).toLocaleDateString("ru-RU")})</div>
+              {(item.provider === 'Мегафон' || item.provider === 'Мультифон') && <div>
                 <Button icon='pi pi-dollar' rounded text severity='info' onClick={() => getBalnce(item.did, item.password)} aria-controls='balance' aria-haspopup tooltip='Баланс' tooltipOptions={{position: 'top'}} />
               </div>}
-              <br/>
             </div>
         )})}
       </div>
@@ -169,9 +168,9 @@ export default function Ats () {
   return (
     <>
     <Head>
-      <title>Телефония / Инструменты</title>
+      <title>АТС / Направления / Инструменты</title>
     </Head>
-    <MainLayout title='Телефония / Инструменты'>
+    <MainLayout title='АТС / Направления / Инструменты'>
       <main>
         <Tooltip target=".operator-item" />
         <Tooltip target=".trunk-item" />
