@@ -28,6 +28,7 @@ const handler = async (req, res) => {
           _id: item._id,
           name: item.name,
           region: item.region,
+          comment: item.comment,
           route: item.routeMethod,
           forced: item.forcedRouting,
           operators: item.operators.map(item => {

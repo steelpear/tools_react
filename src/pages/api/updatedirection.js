@@ -6,7 +6,7 @@ const handler = async (req, res) => {
         'Content-Type': 'application/json',
         Cookie: 'ssid=s%3A-0UhK5iqdBfwDzRI9xsXXpuGGnpx30Q4.ggwVpv9GtimadFAoeQnSxn9m%2FcW6viR4ydzyOwz1GTI'
       },
-      body: JSON.stringify(req.body.data)
+      body: JSON.stringify(req.body)
     })
     const response = await resp.json()
 

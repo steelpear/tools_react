@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import useSWR, {useSWRConfig} from 'swr'
 import useSWRImmutable from 'swr/immutable'
 import Head from 'next/head'
+import { EventBus } from '../components/EventBus'
 import { MainLayout } from '../components/MainLayout'
 import { Loader } from '../components/Loader'
 import { FiltersAts } from '../components/FiltersAts'
@@ -30,7 +31,7 @@ export default function Ats () {
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
 
-  const { data: directions, isLoading } = useSWR('/api/dir', fetcher, {revalidate: false, revalidateOnFocus: false})
+  const { data: directions, isLoading } = useSWR('/api/dir', fetcher)
   const { data: operatorgroups } = useSWRImmutable('/api/operatorgroups', fetcher)
   const { data: queues } = useSWRImmutable('/api/queues', fetcher)
 
@@ -83,6 +84,7 @@ export default function Ats () {
   }
 
   const resetFilters = async () => {
+    EventBus.$emit('reset')
     setIsMut(true)
     await mutate('/api/dir')
     setIsMut(false)
@@ -123,7 +125,7 @@ export default function Ats () {
   }
 
   const numberBodyTemplate = (data) => {
-    return <div style={{cursor: 'pointer'}}>{data.trunks && data.trunks.length > 0 ? data.trunks.map(item => {return <a key={item._id} href={`http://pbx.profpub.ru/index/trunks/trunk/${item._id}`} target='_blank' className='trunk-item' style={{textDecoration:'none'}} data-pr-tooltip={`${item.lastcall ? new Date(item.lastcall).toLocaleDateString("ru-RU") : ''}${item.lastcall ? ' / ' : ''}${item.region}  /  ${item.provider}`} data-pr-position="top" onContextMenu={e => copyToClipboard(e, item.did)}>{item.did}<br></br></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'0rem'}} />}</div>
+    return <div style={{cursor: 'pointer'}}>{data.trunks && data.trunks.length > 0 ? data.trunks.map(item => {return <a key={item._id} href={`http://pbx.profpub.ru/index/trunks/trunk/${item._id}`} target='_blank' className='trunk-item' style={{textDecoration:'none'}} data-pr-tooltip={`${item.provider} / ${item.region}${item.lastcall ? ' / ' : ''}${item.lastcall ? new Date(item.lastcall).toLocaleDateString("ru-RU") : ''}`} data-pr-position="top" onContextMenu={e => copyToClipboard(e, item.did)}>{item.did}<br></br></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'0rem'}} />}</div>
   }
 
   const codeBodyTemplate = (data) => {
@@ -135,7 +137,7 @@ export default function Ats () {
   }
 
   const operatorsBodyTemplate = (data) => {
-    return <div style={{cursor:'pointer', lineHeight:'1rem', paddingLeft: 2}}>{data.operators && data.operators.length > 0 ? data.operators.map(item => {return <a key={item._id} href={`http://pbx.profpub.ru/index/operators/operator/${item._id}`} target='_blank' style={{textDecoration: 'none'}}><div className='operator-item' style={!item.auth ? {color:'orangered'} : {color:'inherit'}} data-pr-tooltip={`${item.location ? item.location : 'Не авторизован'}`} data-pr-position="top">{item.lastname}</div></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'0rem'}} />}</div>
+    return <div style={{cursor:'pointer', lineHeight:'1rem', paddingLeft: 2}}>{data.operators && data.operators.length > 0 ? data.operators.map(item => {return <a key={item._id} href={`http://pbx.profpub.ru/index/operators/operator/${item._id}`} target='_blank' style={{textDecoration: 'none'}}><div className='text-sm' style={!item.auth ? {color:'orangered'} : {color:'inherit'}} data-pr-tooltip={`${item.location ? item.location : 'Не авторизован'}`} data-pr-position="top">{item.lastname}</div></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'0rem'}} />}</div>
   }
 
   const groupsBodyTemplate = (data) => {
@@ -150,17 +152,19 @@ export default function Ats () {
 
   const rowExpansionTemplate = (data) => {
     return (
-      <div className='px-3 py-2'>
-        {(data.trunks && data.trunks.length > 0) && data.trunks.map(item => {
+      <div className='flex align-items-baseline px-3 py-2'>
+        <div>{(data.trunks && data.trunks.length > 0) && data.trunks.map(item => {
           return (
             <div key={item._id} className='flex align-items-center'>
               <i className='pi pi-phone mr-1' />
-              <div className='mr-1'>{item.did} (<span style={{color: `${item.provider === 'Мегафон' && '#00B956' || item.provider === 'Мультифон' && '#00B944'||item.provider === 'Билайн' && '#FFCC01' || item.provider === 'Задарма' && '#D8232A'}`}}>{item.provider}</span> / {item.region}{item.lastcall && ' / '}{item.lastcall && new Date(item.lastcall).toLocaleDateString("ru-RU")})</div>
-              {(item.provider === 'Мегафон' || item.provider === 'Мультифон') && <div>
-                <Button icon='pi pi-dollar' rounded text severity='info' onClick={() => getBalnce(item.did, item.password)} aria-controls='balance' aria-haspopup tooltip='Баланс' tooltipOptions={{position: 'top'}} />
-              </div>}
+              <div className='mr-1'>{item.did} (<span style={{ color: `${item.provider === 'Мегафон' && '#00B956' || item.provider === 'Мультифон' && '#00B944' || item.provider === 'Билайн' && '#FFCC01' || item.provider === 'Задарма' && '#D8232A'}` }}>{item.provider}</span> / {item.region}{item.lastcall && ' / '}{item.lastcall && new Date(item.lastcall).toLocaleDateString("ru-RU")})</div>
+              {(item.provider === 'Мегафон' || item.provider === 'Мультифон') && <Button icon='pi pi-dollar' rounded text severity='info' onClick={() => getBalnce(item.did, item.password)} aria-controls='balance' aria-haspopup tooltip='Баланс' tooltipOptions={{ position: 'top' }} />}
             </div>
-        )})}
+        )})}</div>
+        {data.comment && <div>
+            <i className='pi pi-comment mx-2' />
+            <span className='text-xs'>{data.comment}</span>
+          </div>}
       </div>
     )
   }

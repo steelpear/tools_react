@@ -1,18 +1,21 @@
-import {useState, useRef} from 'react'
-import {useSWRConfig} from 'swr'
+import { useState, useRef, useEffect } from 'react'
+import { useSWRConfig } from 'swr'
+import { EventBus } from '../components/EventBus'
 import { Dropdown } from 'primereact/dropdown'
 import { MultiSelect } from 'primereact/multiselect'
 import { TriStateCheckbox } from 'primereact/tristatecheckbox'
 import { Button } from 'primereact/button'
+import { Toast } from 'primereact/toast'
 import { Loader } from '../components/Loader'
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
 export const FiltersAts = ({...params}) => {
-  const [selectedGroup, setSelectedGroup] = useState(null)
-  const [selectedGroups, setSelectedGroups] = useState(null)
-  const [selectedRoute, setSelectedRoute] = useState(null)
-  const [selectedQueue, setSelectedQueue] = useState(null)
+  const successToast = useRef(null)
+  const [selectedGroup, setSelectedGroup] = useState('')
+  const [selectedGroups, setSelectedGroups] = useState('')
+  const [selectedRoute, setSelectedRoute] = useState('')
+  const [selectedQueue, setSelectedQueue] = useState('')
   const [forced, setForced] = useState(null)
   const [isMut, setIsMut] = useState(false)
   const routes = [
@@ -20,6 +23,19 @@ export const FiltersAts = ({...params}) => {
     {label: 'Карусель', value: 'roundRobin', icon: 'pi pi-refresh'}]
 
   const { mutate } = useSWRConfig()
+
+  useEffect(() => {
+    EventBus.$on('reset', () => resetSelected())
+    return () => {EventBus.$off('reset')}
+  }, [])
+
+  const resetSelected = () => {
+    setSelectedGroup('')
+    setSelectedGroups('')
+    setSelectedRoute('')
+    setSelectedQueue('')
+    setForced(null)
+  }
 
   const filterOfGroup = async (e) => {
     if (e.value) {
@@ -31,6 +47,28 @@ export const FiltersAts = ({...params}) => {
       }), {revalidate: false, revalidateOnFocus: false})
       setIsMut(false)
     }
+  }
+
+  const updateDirections = async () => {
+    const direction = {}
+    if (selectedRoute) {direction.routeMethod = selectedRoute}
+    if (selectedRoute === 'roundRobin' && selectedQueue) {direction.queue = selectedQueue}
+    if (selectedGroups) {direction.operatorGroups = selectedGroups.map(item => item._id)}
+    if (forced !== null) {direction.forcedRouting = forced}
+    if (params.sel && params.sel.length > 0) {
+      setIsMut(true)
+      params.sel.forEach(async item => {
+        direction._id = item._id
+        await mutate('/api/updatedirection', fetcher('/api/updatedirection', {
+          method: 'POST',
+          headers: { 'Content-type': 'application/json; charset=UTF-8' },
+          body: JSON.stringify({direction})
+        }))
+      })
+    }
+    await mutate('/api/dir')
+    setIsMut(false)
+    successToast.current.show({severity:'success', detail:'Изменения сохранены', life: 2000})
   }
 
   const selectedGroupFilter = (e) => {
@@ -88,9 +126,10 @@ export const FiltersAts = ({...params}) => {
         {selectedRoute == 'roundRobin' &&<Dropdown value={selectedQueue} onChange={(e) => setSelectedQueue(e.value)} options={params.queues} optionLabel="name" optionValue="_id" showClear placeholder="Очередь" valueTemplate={selectedQueueTemplate} itemTemplate={queueOptionTemplate} className="w-full md:w-10rem ml-2" />}
         <MultiSelect value={selectedGroups} onChange={(e) => setSelectedGroups(e.value)} options={params.operatorgroups} optionLabel="name" showSelectAll={false} maxSelectedLabels={2} selectedItemsLabel={`Выбрано ${selectedGroups && selectedGroups.length > 1 ? selectedGroups.length : ''}`} showClear placeholder="Группы" filter={false} selectedItemTemplate={selectedGroupsTemplate} itemTemplate={itemGroupsTemplate} className="w-full md:w-10rem ml-2" />
         <TriStateCheckbox value={forced} onChange={(e) => setForced(e.value)} className="ml-2" aria-haspopup tooltip="Принудительная маршрутизация" tooltipOptions={{position: 'top'}} />
-        <Button icon="pi pi-forward" rounded text severity="info" size='large' onClick={() => resetFilters()} aria-haspopup tooltip="Пакетная обработка" tooltipOptions={{position: 'top'}} />
+        <Button icon="pi pi-forward" rounded text severity="info" size='large' onClick={() => updateDirections()} aria-haspopup tooltip="Пакетная обработка" tooltipOptions={{position: 'top'}} />
       </div>}
       {isMut && <Loader mutate={true} />}
+      <Toast ref={successToast} position="top-center" />
     </div>
   )
 }
