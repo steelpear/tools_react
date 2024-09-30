@@ -58,6 +58,11 @@ export default function Users () {
       label: 'Очистить отели',
       icon: 'pi pi-times',
       command: e => clearDialog.current.toggle(e.originalEvent)
+    },
+    {
+      label: 'В аккаунт',
+      icon: 'pi pi-user',
+      command: () => window.open(`https://broniryem.ru/admin/accounts/account/${currentUserId}`, '_blank', 'noopener,noreferrer')
     }
   ]
 
@@ -238,9 +243,7 @@ export default function Users () {
                         {post.staff.map(item => {return users && users.map(user => {if (user._id == item) {return (
                         <>
                           <Menu model={chipMenuItems} popup ref={chipMenu} id="popup_menu_left" />
-                          <a href={`https://broniryem.ru/admin/accounts/account/${user._id}`} target='_blank' style={{textDecoration:'none'}}>
-                            <Chip key={user._id} label={user.lastname ? user.lastname : user.user} removable className="custom-target-chip mx-1 cursor-pointer" onRemove={() => deleteUser(post._id, user._id)} onContextMenu={(e) => userHotelsListMenu(e, user._id)} aria-controls="popup_menu_left" aria-haspopup data-pr-tooltip={`${user.user} (${user.hotels.length})`}data-pr-position="top" />
-                          </a>
+                          <Chip key={user._id} label={user.lastname ? user.lastname : user.user} removable className="custom-target-chip mx-1 cursor-pointer" onRemove={() => deleteUser(post._id, user._id)} onContextMenu={(e) => userHotelsListMenu(e, user._id)} aria-controls="popup_menu_left" aria-haspopup data-pr-tooltip={`${user.user} (${user.hotels.length})`}data-pr-position="top" />
                         </>
                         )}})
                           }).sort((a, b) => a.label > b.label ? -1 : 1)}
@@ -275,7 +278,7 @@ export default function Users () {
               <div>
                 <div className="font-medium text-center block">Импорт отелей</div>
                 <div className="text-sm text-center block mb-2">{currentUserName}</div>
-                <InputTextarea value={importHotelsValue} onChange={(e) => setImportHotelsValue(e.target.value)} rows={3} cols={30} />
+                <InputTextarea value={importHotelsValue} onChange={(e) => setImportHotelsValue(e.target.value)} rows={3} />
               </div>
             </div>
             <div className="flex align-items-center justify-content-between mt-2">
@@ -290,7 +293,7 @@ export default function Users () {
               <div>
                 <div className="font-medium text-center block">Экспорт отелей {exportHotelsValue.length > 0 && <Badge value={exportHotelsValue.length} severity="info" />}</div>
                 <div className="text-sm text-center block mb-2">{currentUserName}</div>
-                <InputTextarea value={exportHotelsValue} disabled={exportHotelsValue.length < 1} onChange={(e) => setExportHotelsValue(e.target.value)} rows={3} cols={30} />
+                <InputTextarea value={exportHotelsValue} disabled={exportHotelsValue.length < 1} onChange={(e) => setExportHotelsValue(e.target.value)} rows={3} />
               </div>
             </div>
             <div className="flex align-items-center justify-content-between mt-2">
