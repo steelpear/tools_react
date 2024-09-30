@@ -57,6 +57,9 @@ const handler = async (req, res) => {
               }
             )
           }) : [],
+          trunksdid: (item.trunks && item.trunks.length > 0) ? item.trunks.map(item => item.trunk && item.trunk.did) : [],
+          trunkscode: (item.trunks && item.trunks.length > 0) ? item.trunks.map(item => item.code) : [],
+          lastname: (item.operators && item.operators.length > 0) ? item.operators.map(item => item.lastName) : [],
           queue: item.queue
         }
       )

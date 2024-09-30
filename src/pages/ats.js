@@ -125,7 +125,7 @@ export default function Ats () {
   }
 
   const numberBodyTemplate = (data) => {
-    return <div style={{cursor: 'pointer'}}>{data.trunks && data.trunks.length > 0 ? data.trunks.map(item => {return <a key={item._id} href={`http://pbx.profpub.ru/index/trunks/trunk/${item._id}`} target='_blank' className='trunk-item' style={{textDecoration:'none'}} data-pr-tooltip={`${item.provider} / ${item.region}${item.lastcall ? ' / ' : ''}${item.lastcall ? new Date(item.lastcall).toLocaleDateString("ru-RU") : ''}`} data-pr-position="top" onContextMenu={e => copyToClipboard(e, item.did)}>{item.did}<br></br></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'0rem'}} />}</div>
+    return <div style={{cursor: 'pointer'}}>{data.trunks && data.trunks.length > 0 ? data.trunks.map(item => {return <a key={item._id} href={`http://pbx.profpub.ru/index/trunks/trunk/${item._id}`} target='_blank' style={{textDecoration:'none'}} data-pr-tooltip={`${item.provider} / ${item.region}${item.lastcall ? ' / ' : ''}${item.lastcall ? new Date(item.lastcall).toLocaleDateString("ru-RU") : ''}`} data-pr-position="top" onContextMenu={e => copyToClipboard(e, item.did)}>{item.did}<br></br></a>}) : <i className="pi pi-minus py-3" style={{lineHeight:'0rem'}} />}</div>
   }
 
   const codeBodyTemplate = (data) => {
@@ -152,7 +152,7 @@ export default function Ats () {
 
   const rowExpansionTemplate = (data) => {
     return (
-      <div className='flex align-items-baseline px-3 py-2'>
+      <div className='flex align-items-baseline px-3 py-2 ml-4'>
         <div>{(data.trunks && data.trunks.length > 0) && data.trunks.map(item => {
           return (
             <div key={item._id} className='flex align-items-center'>
@@ -178,19 +178,19 @@ export default function Ats () {
       <main>
         <Tooltip target=".operator-item" />
         <Tooltip target=".trunk-item" />
-        <DataTable value={directions} expandedRows={expandedRows} onRowToggle={(e) => setExpandedRows(e.data)} rowExpansionTemplate={rowExpansionTemplate} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,directions ? directions.length : 0]} filters={filters} globalFilterFields={['name','region','queue.name','route','trunks.code','trunks.did']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+        <DataTable value={directions} expandedRows={expandedRows} onRowToggle={(e) => setExpandedRows(e.data)} rowExpansionTemplate={rowExpansionTemplate} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,directions ? directions.length : 0]} filters={filters} globalFilterFields={['name','region','route','queue.name','trunkscode','trunksdid','lastname']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
           <Column expander={allowExpansion} style={{ width: '2.1rem' }} />
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
-          <Column selectionMode='multiple' headerStyle={{ width: '3rem', backgroundColor:'white',paddingLeft:'unset' }} />
-          <Column header='Объект' field='name' body={data => <a href={`http://pbx.profpub.ru/index/directions/direction/${data._id}`} target="_blank" style={{textDecoration:'none'}}>{data.name}</a>} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Регион' field='region' sortable headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Номер' field='trunks.did' body={numberBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Код' field='trunks.code' body={codeBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Операторы' field='operators.lastname' body={operatorsBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Группы' field='groups' body={groupsBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Маршрут' field='route' sortable headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Очередь' field='queue.name' sortable body={queueBodyTemplate} headerStyle={{ backgroundColor:'white', paddingLeft:'unset' }} />
-          <Column header='Принуд.' field='forced' body={forcedBodyTemplate} headerStyle={{ backgroundColor:'white', padding:'unset' }} />
+          <Column selectionMode='multiple' headerStyle={{ width: '3rem', paddingLeft:'unset' }} />
+          <Column header='Объект' body={data => <a href={`http://pbx.profpub.ru/index/directions/direction/${data._id}`} target="_blank" style={{textDecoration:'none'}}>{data.name}</a>} />
+          <Column header='Регион' field='region' sortable />
+          <Column header='Номер' body={numberBodyTemplate} />
+          <Column header='Код' body={codeBodyTemplate} />
+          <Column header='Операторы' body={operatorsBodyTemplate} />
+          <Column header='Группы' body={groupsBodyTemplate} />
+          <Column header='Маршрут' field='route' sortable />
+          <Column header='Очередь' sortable body={queueBodyTemplate} />
+          <Column header='Принуд.' body={forcedBodyTemplate} />
         </DataTable>
         {isMut && <Loader mutate={true} />}
         <Toast ref={copyToast} position="top-center" />
