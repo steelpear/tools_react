@@ -45,6 +45,7 @@ export const FiltersAts = ({...params}) => {
         headers: { 'Content-type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({mode: 'filter', data: e.value})
       }), {revalidate: false, revalidateOnFocus: false})
+      EventBus.$emit('resetcounter')
       setIsMut(false)
     }
   }

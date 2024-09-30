@@ -23,7 +23,7 @@ export function MainLayout({ children, ...params }) {
         <p className='hover:text-blue-700 w-full' onClick={() => router.push('/idfinder')} style={{color: router.route === '/idfinder' && 'red'}}><i className='pi pi-table mr-3'></i>ID Finder</p>
       </Sidebar>
       <Button icon='pi pi-bars' severity='secondary' rounded text onClick={() => setVisibleSide(true)} />
-      <div style={{fontSize: 20,marginInline: 20}}>{params.title}{router.route === '/' && <span style={{fontSize: 14,marginInline: 10}}><Badge value={params.count} /></span>}</div>
+      <div style={{fontSize: 20,marginInline: 20}}>{params.title}{(router.route === '/' || router.route === '/ats') && <span style={{fontSize: 14,marginInline: 10}}><Badge value={params.count} /></span>}</div>
       {router.route === '/users' && <Button icon='pi pi-plus' severity='success' rounded text size='large' onClick={() => EventBus.$emit('addpost')} tooltip="Добавить пост" tooltipOptions={{position: 'right'}} />}
     </div>
   )

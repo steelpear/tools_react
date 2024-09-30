@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import useSWR, {useSWRConfig} from 'swr'
 import useSWRImmutable from 'swr/immutable'
 import Head from 'next/head'
@@ -26,6 +26,7 @@ export default function Ats () {
   const { mutate } = useSWRConfig()
 
   const [isMut, setIsMut] = useState(false)
+  const [counter, setCounter] = useState(0)
   const [expandedRows, setExpandedRows] = useState(null)
   const [selectedDirections, setSelectedDirections] = useState(null)
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
@@ -34,6 +35,11 @@ export default function Ats () {
   const { data: directions, isLoading } = useSWR('/api/dir', fetcher)
   const { data: operatorgroups } = useSWRImmutable('/api/operatorgroups', fetcher)
   const { data: queues } = useSWRImmutable('/api/queues', fetcher)
+
+  useEffect(() => {
+    EventBus.$on('resetcounter', () => setCounter(0))
+    return () => {EventBus.$off('resetcounter')}
+  }, [])
 
   const onGlobalFilterChange = (e) => {
     const value = e.target.value
@@ -174,11 +180,11 @@ export default function Ats () {
     <Head>
       <title>АТС / Направления / Инструменты</title>
     </Head>
-    <MainLayout title='АТС / Направления / Инструменты'>
+    <MainLayout count={counter > 0 ? counter : directions.length} title='АТС / Направления / Инструменты'>
       <main>
         <Tooltip target=".operator-item" />
         <Tooltip target=".trunk-item" />
-        <DataTable value={directions} expandedRows={expandedRows} onRowToggle={(e) => setExpandedRows(e.data)} rowExpansionTemplate={rowExpansionTemplate} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,directions ? directions.length : 0]} filters={filters} globalFilterFields={['name','region','route','queue.name','trunkscode','trunksdid','lastname']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }}>
+        <DataTable value={directions} expandedRows={expandedRows} onRowToggle={(e) => setExpandedRows(e.data)} rowExpansionTemplate={rowExpansionTemplate} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,counter > 0 ? counter : directions.length]} filters={filters} globalFilterFields={['name','region','route','queue.name','trunkscode','trunksdid','lastname']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }} onValueChange={(e) => setCounter(e.length)}>
           <Column expander={allowExpansion} style={{ width: '2.1rem' }} />
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
           <Column selectionMode='multiple' headerStyle={{ width: '3rem', paddingLeft:'unset' }} />
