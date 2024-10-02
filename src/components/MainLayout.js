@@ -16,11 +16,11 @@ export function MainLayout({ children, ...params }) {
   const ToolbarStartContent = (
     <div className='card flex justify-content-center align-items-center'>
       <Sidebar visible={visible} onHide={() => setVisibleSide(false)} className='w-full md:w-10rem lg:w-18rem'>
-        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/')} style={{color: router.route === '/' && 'red'}}><i className='pi pi-home mr-3'></i>Объекты</p>
-        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/users')} style={{color: router.route === '/users' && 'red'}}><i className='pi pi-users mr-3'></i>Посты</p>
-        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/ats')} style={{color: router.route === '/ats' && 'red'}}><i className='pi pi-phone mr-3'></i>Направления</p>
-        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/operators')} style={{color: router.route === '/operators' && 'red'}}><i className='pi pi-user mr-3'></i>Операторы</p>
-        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/idfinder')} style={{color: router.route === '/idfinder' && 'red'}}><i className='pi pi-table mr-3'></i>ID Finder</p>
+        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/')} style={{color: router.route === '/' && 'blue'}}><i className='pi pi-home mr-3'></i>Объекты</p>
+        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/users')} style={{color: router.route === '/users' && 'blue'}}><i className='pi pi-users mr-3'></i>Посты</p>
+        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/ats')} style={{color: router.route === '/ats' && 'blue'}}><i className='pi pi-phone mr-3'></i>Направления</p>
+        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/operators')} style={{color: router.route === '/operators' && 'blue'}}><i className='pi pi-user mr-3'></i>Операторы</p>
+        <p className='hover:text-blue-700 w-full' onClick={() => router.push('/idfinder')} style={{color: router.route === '/idfinder' && 'blue'}}><i className='pi pi-table mr-3'></i>ID Finder</p>
       </Sidebar>
       <Button icon='pi pi-bars' severity='secondary' rounded text onClick={() => setVisibleSide(true)} />
       <div style={{fontSize: 20,marginInline: 20}}>{params.title}{(router.route === '/' || router.route === '/ats') && <span style={{fontSize: 14,marginInline: 10}}><Badge value={params.count} /></span>}</div>

@@ -32,7 +32,7 @@ export default function Ats () {
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
 
-  const { data: directions, isLoading } = useSWR('/api/dir', fetcher)
+  const { data: directions, isLoading } = useSWR('/api/dir', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
   const { data: operatorgroups } = useSWRImmutable('/api/operatorgroups', fetcher)
   const { data: queues } = useSWRImmutable('/api/queues', fetcher)
 
@@ -180,11 +180,11 @@ export default function Ats () {
     <Head>
       <title>АТС / Направления / Инструменты</title>
     </Head>
-    <MainLayout count={counter > 0 ? counter : directions.length} title='АТС / Направления / Инструменты'>
+    <MainLayout count={counter > 0 ? counter : directions && directions.length} title='АТС / Направления / Инструменты'>
       <main>
         <Tooltip target=".operator-item" />
         <Tooltip target=".trunk-item" />
-        <DataTable value={directions} expandedRows={expandedRows} onRowToggle={(e) => setExpandedRows(e.data)} rowExpansionTemplate={rowExpansionTemplate} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,counter > 0 ? counter : directions.length]} filters={filters} globalFilterFields={['name','region','route','queue.name','trunkscode','trunksdid','lastname']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }} onValueChange={(e) => setCounter(e.length)}>
+        <DataTable value={directions} expandedRows={expandedRows} onRowToggle={(e) => setExpandedRows(e.data)} rowExpansionTemplate={rowExpansionTemplate} loading={isLoading} size='small' selectionMode='checkbox' selectionPageOnly selection={selectedDirections} onSelectionChange={(e) => setSelectedDirections(e.value)} dataKey='_id' stripedRows removableSort paginator responsiveLayout='scroll' paginatorTemplate='CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown' currentPageReportTemplate='Строки {first} - {last} из {totalRecords}' rows={50} rowsPerPageOptions={[50,100,counter > 0 ? counter : directions && directions.length]} filters={filters} globalFilterFields={['name','region','route','queue.name','trunkscode','trunksdid','lastname']} header={headerTemplate} emptyMessage='Даных нет.' style={{fontSize:14}} tableStyle={{ minWidth: '50rem' }} onValueChange={(e) => setCounter(e.length)}>
           <Column expander={allowExpansion} style={{ width: '2.1rem' }} />
           <Column header="#" headerStyle={{width: '2.5rem'}} body={(data, options) => <div className='ml-1 text-sm'>{options.rowIndex + 1}</div>} />
           <Column selectionMode='multiple' headerStyle={{ width: '3rem', paddingLeft:'unset' }} />
