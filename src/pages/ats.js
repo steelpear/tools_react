@@ -32,7 +32,7 @@ export default function Ats () {
   const [filters, setFilters] = useState({'global': { value: null, matchMode: FilterMatchMode.CONTAINS }})
   const [globalFilterValue, setGlobalFilterValue] = useState('')
 
-  const { data: directions, isLoading } = useSWR('/api/dir', fetcher, {revalidateOnMount: false, revalidateOnFocus: false})
+  const { data: directions, isLoading } = useSWR('/api/dir', fetcher, {revalidateOnFocus: false})
   const { data: operatorgroups } = useSWRImmutable('/api/operatorgroups', fetcher)
   const { data: queues } = useSWRImmutable('/api/queues', fetcher)
 

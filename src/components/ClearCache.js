@@ -12,10 +12,10 @@ export const ClearCache = () => {
   }
 
   return (
-    <div className="card flex justify-content-center">
+    <>
       <Button icon="pi pi-sync" rounded text severity="secondary" aria-label="Clear" onClick={() => clear()} tooltip="Сбросить кэш" tooltipOptions={{ position: 'left' }} />
       <Toast ref={toast} position="top-center" />
-    </div>
+    </>
   )
 }
  
