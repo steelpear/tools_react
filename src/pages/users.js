@@ -69,7 +69,7 @@ export default function Users () {
   useEffect(() => {
     EventBus.$on('addpost', () => addPost())
     return () => {EventBus.$off('addpost')}
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const addPost = async () => {
     const cnt = await fetch('/api/countposts')

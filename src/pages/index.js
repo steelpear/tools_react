@@ -329,11 +329,11 @@ export default function Home () {
   }
 
   const siteBodyTemplate = (data) => {
-    if (data.site_type === 'Сателлит') {return <div style={{textAlign:'center'}}><Image src='satellite.svg' width='18' /></div>}
-    else if (data.site_type === 'Классический') {return <div style={{textAlign:'center'}}><Image src='rocket.svg' width='18' /></div>}
-    else if (data.site_type === 'Автономный') {return <div style={{textAlign:'center'}}><Image src='aa.svg' width='18' /></div>}
-    else if (data.site_type === 'Автосателлит') {return <div style={{textAlign:'center'}}><Image src='letter.svg' width='18' /></div>}
-    else if (data.site_type === 'Нет сайта') {return <div style={{textAlign:'center'}}><Image src='logo.svg' width='18' /></div>}
+    if (data.site_type === 'Сателлит') {return <div style={{textAlign:'center'}}><Image src='satellite.svg' alt="satellite" width='18' /></div>}
+    else if (data.site_type === 'Классический') {return <div style={{textAlign:'center'}}><Image src='rocket.svg' alt="rocket" width='18' /></div>}
+    else if (data.site_type === 'Автономный') {return <div style={{textAlign:'center'}}><Image src='aa.svg' alt="aa" width='18' /></div>}
+    else if (data.site_type === 'Автосателлит') {return <div style={{textAlign:'center'}}><Image src='letter.svg' alt="letter" width='18' /></div>}
+    else if (data.site_type === 'Нет сайта') {return <div style={{textAlign:'center'}}><Image src='logo.svg' alt="logo" width='18' /></div>}
     else {return <div style={{textAlign:'center'}}><Image src='nothing.svg' alt='portal' width='18' /></div>}
   }
 
