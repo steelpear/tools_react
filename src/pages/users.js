@@ -203,7 +203,8 @@ export default function Users () {
     const res = await fetch('/api/updateuserhotels', {
       method: 'POST',
       headers: { 'Content-type': 'application/json; charset=UTF-8' },
-      body: JSON.stringify({ id: currentUserId, data:  importHotelsValue.replace(/[^a-z0-9,]/g, '').split(',') })
+      body: JSON.stringify({ id: currentUserId, data:  importHotelsValue })
+      // body: JSON.stringify({ id: currentUserId, data:  importHotelsValue.replace(/[^a-z0-9,]/g, '').split(',') })
     })
     const response = await res.json()
     if (response) {toast.current.show({severity:'success', detail:'Список отелей импортирован', life: 2000})}

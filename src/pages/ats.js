@@ -23,6 +23,8 @@ export default function Ats () {
   const megafonToast = useRef(null)
   const copyToast = useRef(null)
   const inputFile = useRef(null)
+  const inputExlude = useRef(null)
+
   const { mutate } = useSWRConfig()
 
   const [isMut, setIsMut] = useState(false)
@@ -77,6 +79,26 @@ export default function Ats () {
     }
   }
 
+  const importExlude = async e => {
+    const { files } = e.target
+    if (files && files.length) {
+      const reader = new FileReader()
+      reader.readAsText(files[0])
+      reader.onload = async () => {
+        const dirs = directions.filter(item => !JSON.parse(reader.result).includes(item._id))
+        const out = JSON.stringify(dirs.map(item => item._id))
+        const date = new Date()
+        const name = 'exlude-directions-list_' + ('0' + date.getDate()).slice(-2) + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear() + '_' + ('0' + date.getHours()).slice(-2) + '-' + ('0' + date.getMinutes()).slice(-2) + '.json'
+        const blob = new Blob([out], { type: "text/plain" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.download = name
+        link.href = url
+        link.click()
+      }
+    }
+  }
+
   const exportIds = () => {
     const ids = JSON.stringify(selectedDirections.map(item => item._id))
     const date = new Date()
@@ -113,7 +135,9 @@ export default function Ats () {
       <div className='flex align-items-center justify-content-between'>
         <div className='flex align-items-center'>
           <input style={{display:"none"}} ref={inputFile} onChange={importIds} type="file" accept=".json" />
+          <input style={{display:"none"}} ref={inputExlude} onChange={importExlude} type="file" accept=".json" />
           <Button icon="pi pi-file-import" rounded text severity="info" onClick={() => inputFile.current.click()} aria-controls="import" aria-haspopup tooltip="Импорт" tooltipOptions={{position: 'top'}} />
+          <Button icon="pi pi-minus" rounded text severity="info" onClick={() => inputExlude.current.click()} aria-controls="import" aria-haspopup tooltip="Исключение" tooltipOptions={{position: 'top'}} />
           <Button icon="pi pi-file-export" rounded text severity="info" disabled={!selectedDirections || selectedDirections.length < 1} onClick={() => exportIds()} aria-controls="export" aria-haspopup tooltip="Экспорт" tooltipOptions={{position: 'top'}} />
           <Button icon="pi pi-filter-slash" rounded text severity="info" onClick={() => resetFilters()} aria-controls="filter_menu" aria-haspopup tooltip="Сбросить фильтры" tooltipOptions={{position: 'top'}} />
           <PhoneNumberInfo />
